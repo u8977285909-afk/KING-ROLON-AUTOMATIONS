@@ -1,0 +1,25 @@
+[
+  {
+    "id": "T20251112054733350592",
+    "nombre": "Subir clip diario a TikTok",
+    "plataforma": "TikTok",
+    "frecuencia": "Cada 24h",
+    "activa": true,
+    "creada_en": "2025-11-12 05:47:33"
+  },
+  {
+    "id": "T20251112055221567367",
+    "nombre": "Subir clip diario a TikTok",
+    "plataforma": "TikTok",
+    "frecuencia": "Cada 24h",
+    "activa": true,
+    "creada_en": "2025-11-12 05:52:21"
+  },
+  {
+    "id": "54516e5d-c0ed-4bad-810f-295db84530fb",
+    "nombre": "Subir clip motivacional",
+    "plataforma": "TikTok",
+    "frecuencia": "Cada día",
+    "activa": true
+  }
+]

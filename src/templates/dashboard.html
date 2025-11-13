@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="kr-grid kr-grid-3">
+  <!-- Ingresos -->
+  <div class="kr-card">
+    <div class="kr-card-title">Ingresos estimados (mensual)</div>
+    <div class="kr-card-number">€ {{ ingresos_mensuales }}</div>
+    <div class="kr-card-label">Simulación basada en tu actividad actual</div>
+  </div>
+
+  <!-- Tareas -->
+  <div class="kr-card">
+    <div class="kr-card-title">Tareas automáticas activas</div>
+    <div class="kr-card-number">{{ tareas_activas|length }}</div>
+    <div class="kr-card-label">Publicaciones, recortes y respuestas</div>
+  </div>
+
+  <!-- Plataformas -->
+  <div class="kr-card">
+    <div class="kr-card-title">Plataformas conectadas</div>
+    <div class="kr-card-number">{{ plataformas|length }}</div>
+    <div class="kr-card-label">
+      {% for p in plataformas %}
+        {{ p.nombre }}{% if not loop.last %} · {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="kr-grid kr-grid-2 kr-mt-lg">
+  <!-- Estado de conexiones -->
+  <div class="kr-card">
+    <div class="kr-card-title">Estado de conexiones</div>
+    <ul class="kr-list kr-mt-lg">
+      {% for p in plataformas %}
+      <li>
+        <span>{{ p.nombre }}</span>
+        {% if p.estado == "Conectado" %}
+          <span class="kr-tag kr-tag-ok">Conectado</span>
+        {% elif p.estado == "Pendiente" %}
+          <span class="kr-tag kr-tag-pending">Pendiente</span>
+        {% else %}
+          <span class="kr-tag kr-tag-off">No conectado</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <!-- Logs recientes -->
+  <div class="kr-card">
+    <div class="kr-card-title">Actividad reciente (logs)</div>
+    <ul class="kr-list kr-mt-lg" id="kr-logs">
+      {% for ln in ultimos_logs %}
+        <li><span>{{ ln }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- ================= Modal Nueva Tarea ================= -->
+<style>
+  .kr-modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.55);
+    display:none;align-items:center;justify-content:center;z-index:50
+  }
+  .kr-modal{
+    width:min(520px,92vw);border-radius:18px;padding:22px;
+    background:radial-gradient(circle at top left,#171320 0,#07060c 60%);
+    border:1px solid rgba(255,255,255,.06);color:#f3f3f3
+  }
+  .kr-modal h3{font-size:18px;margin-bottom:14px}
+  .kr-field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+  .kr-input,.kr-select{
+    background:#0f0f16;border:1px solid rgba(255,255,255,.12);
+    border-radius:12px;color:#fff;padding:12px
+  }
+  .kr-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+  .kr-btn-xs{padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#1b1b23;color:#fff;cursor:pointer}
+  .kr-btn-primary{background:linear-gradient(90deg,#e0b15b,#f7e39c);color:#050509;border:none;font-weight:600}
+</style>
+
+<div class="kr-modal-overlay" id="kr-modal-overlay">
+  <div class="kr-modal">
+    <h3>➕ Nueva automatización</h3>
+
+    <div class="kr-field">
+      <label>Nombre de la tarea</label>
+      <input id="kr-nombre" class="kr-input" placeholder="Ej: Subir clip diario a TikTok" />
+    </div>
+
+    <div class="kr-field">
+      <label>Plataforma</label>
+      <select id="kr-plataforma" class="kr-select">
+        <option>TikTok</option>
+        <option>Facebook</option>
+        <option>YouTube</option>
+        <option>Twitch</option>
+        <option>Global</option>
+      </select>
+    </div>
+
+    <div class="kr-field">
+      <label>Frecuencia</label>
+      <input id="kr-frecuencia" class="kr-input" placeholder="Cada 24h / Después de cada stream" />
+    </div>
+
+    <div class="kr-actions">
+      <button class="kr-btn-xs" id="kr-cancelar">Cancelar</button>
+      <button class="kr-btn-xs kr-btn-primary" id="kr-guardar">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ----- Abrir/cerrar modal -----
+  const openBtn = document.getElementById("kr-open-modal");
+  const overlay = document.getElementById("kr-modal-overlay");
+  const cancelar = document.getElementById("kr-cancelar");
+  const guardar = document.getElementById("kr-guardar");
+
+  if (openBtn) openBtn.addEventListener("click", () => overlay.style.display = "flex");
+  if (cancelar) cancelar.addEventListener("click", () => overlay.style.display = "none");
+  overlay?.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.style.display = "none";
+  });
+
+  // ----- Crear tarea (POST /api/tasks) -----
+  async function crearTarea() {
+    const nombre = (document.getElementById("kr-nombre").value || "").trim();
+    const plataforma = document.getElementById("kr-plataforma").value;
+    const frecuencia = (document.getElementById("kr-frecuencia").value || "").trim();
+
+    if (!nombre) {
+      alert("El nombre es obligatorio.");
+      return;
+    }
+
+    const res = await fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, plataforma, frecuencia })
+    });
+
+    const data = await res.json();
+    if (!data.ok) {
+      alert(data.error || "No se pudo crear la tarea");
+      return;
+    }
+
+    // Cierra el modal y recarga para ver los números actualizados
+    overlay.style.display = "none";
+    location.reload();
+  }
+  guardar?.addEventListener("click", crearTarea);
+</script>
+
+{% endblock %}
