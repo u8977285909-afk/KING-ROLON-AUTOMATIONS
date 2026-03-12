@@ -1,0 +1,255 @@
+<!-- templates/marketplace.html -->
+{% extends "base.html" %}
+
+{% block title %}{{ t('market.title_tab') }} | {{ t('app.name') }}{% endblock %}
+{% block page_title %}{{ t('market.title') }}{% endblock %}
+{% block page_subtitle %}{{ t('market.subtitle') }}{% endblock %}
+
+{% block content %}
+
+{# =========================================================
+   RESUMEN RÁPIDO
+========================================================= #}
+<section class="kr-card">
+  <div class="kr-settings-header-row" style="align-items:center; flex-wrap:wrap; gap:10px;">
+    <div>
+      <h2 class="kr-card-title" style="margin-bottom:4px;">{{ t('market.state_title') }}</h2>
+      <p class="kr-card-label">
+        {{ t('market.state_desc', n=apps_count or 0) }}
+      </p>
+    </div>
+
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <span class="kr-tag kr-tag-ok">{{ t('market.badge_creator_active') }}</span>
+      <span class="kr-tag kr-tag-pending">{{ t('market.badge_mvp') }}</span>
+    </div>
+  </div>
+</section>
+
+{# =========================================================
+   DESTACADOS
+========================================================= #}
+<section class="kr-card kr-mt-lg">
+  <h2 class="kr-card-title">🔥 {{ t('market.featured_title') }}</h2>
+  <p class="kr-card-label">{{ t('market.featured_desc') }}</p>
+
+  {% if apps_featured %}
+    <div class="kr-mt-lg" style="display:flex; gap:14px; overflow-x:auto; padding-bottom:8px;">
+      {% for app in apps_featured %}
+        {% set d = app.downloads or 0 %}
+        {% set price_eur = (app.price_cents or 0) / 100 %}
+
+        <article class="kr-card" style="min-width:300px; max-width:360px; border-radius:18px;">
+          <div class="kr-settings-header-row" style="align-items:flex-start;">
+            <div>
+              <h3 style="margin:0; font-size:15px; font-weight:800;">
+                {{ app.title or t('market.app_no_title') }}
+              </h3>
+
+              <div class="kr-text-muted" style="font-size:12px; margin-top:6px;">
+                {% if d > 0 %}
+                  {{ t('market.featured_rating', n=d) }}
+                {% else %}
+                  {{ t('market.no_downloads') }}
+                {% endif %}
+              </div>
+
+              <div style="margin-top:8px;">
+                {% if price_eur == 0 %}
+                  <span class="kr-tag kr-tag-pending">{{ t('market.free') }}</span>
+                {% else %}
+                  <span class="kr-tag kr-tag-ok">€ {{ price_eur|round(2) }}</span>
+                {% endif %}
+                <span class="kr-tag kr-tag-ok" style="margin-left:6px;">{{ t('market.featured_badge') }}</span>
+              </div>
+            </div>
+
+            <a href="{{ url_for('marketplace_download', slug=app.slug) }}"
+               class="kr-btn kr-btn-xs kr-btn-gold">
+              {{ t('market.download') }}
+            </a>
+          </div>
+
+          {% if app.description %}
+            <p class="kr-text-muted" style="font-size:12px; margin-top:10px; line-height:1.45;">
+              {{ app.description[:160] }}{% if app.description|length > 160 %}…{% endif %}
+            </p>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="kr-text-muted kr-mt-lg" style="font-size:12px;">
+      {{ t('market.no_featured') }}
+    </p>
+  {% endif %}
+</section>
+
+{# =========================================================
+   FILTROS
+========================================================= #}
+<section class="kr-card kr-mt-lg">
+  <h2 class="kr-card-title">{{ t('market.filters_title') }}</h2>
+
+  <form method="get" action="{{ url_for('marketplace') }}" class="kr-mt-lg">
+    <div class="kr-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap:14px;">
+      <div class="kr-field">
+        <label class="kr-label">{{ t('market.filter_platform') }}</label>
+        <input type="text" name="platform" class="kr-input"
+               placeholder="TikTok, Twitch, YouTube…"
+               value="{{ filter_platform or '' }}">
+      </div>
+
+      <div class="kr-field">
+        <label class="kr-label">{{ t('market.filter_category') }}</label>
+        <input type="text" name="category" class="kr-input"
+               placeholder="Clips, overlays…"
+               value="{{ filter_category or '' }}">
+      </div>
+
+      <div class="kr-field">
+        <label class="kr-label">{{ t('market.filter_max_price') }}</label>
+        <input type="text" name="max_price" class="kr-input"
+               placeholder="9.99"
+               value="{{ filter_max_price or '' }}">
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; margin-top:10px; gap:8px; flex-wrap:wrap;">
+      {% if filter_platform or filter_category or filter_max_price %}
+        <a href="{{ url_for('marketplace') }}" class="kr-btn kr-btn-xs">
+          {{ t('market.clear_filters') }}
+        </a>
+      {% endif %}
+      <button class="kr-btn kr-btn-gold">{{ t('market.apply_filters') }}</button>
+    </div>
+  </form>
+
+  <style>
+    @media (max-width: 900px){
+      .kr-grid[style*="repeat(3"]{ grid-template-columns: 1fr !important; }
+    }
+  </style>
+</section>
+
+{# =========================================================
+   GRID PRINCIPAL – APPS PÚBLICAS
+========================================================= #}
+<section class="kr-card kr-mt-lg">
+  <h2 class="kr-card-title">{{ t('market.catalog_title') }}</h2>
+  <p class="kr-card-label">{{ t('market.catalog_desc') }}</p>
+
+  {% if apps_public %}
+    <div class="kr-grid kr-grid-3 kr-mt-lg">
+      {% for app in apps_public %}
+        {% set price_eur = (app.price_cents or 0) / 100 %}
+
+        <article class="kr-card" style="border-radius:18px;">
+          <div>
+            <h3 style="margin:0; font-size:15px; font-weight:800;">
+              {{ app.title or t('market.app_no_title') }}
+            </h3>
+
+            <div class="kr-text-muted" style="font-size:12px; display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;">
+              <span>🧩 {{ app.platform or "N/A" }}</span>
+              <span>• {{ app.category or t('market.general') }}</span>
+              <span>• ⚙️ {{ app.level or "Starter" }}</span>
+            </div>
+
+            <div style="margin-top:8px;">
+              {% if price_eur == 0 %}
+                <span class="kr-tag kr-tag-pending">{{ t('market.free') }}</span>
+              {% else %}
+                <span class="kr-tag kr-tag-ok">€ {{ price_eur|round(2) }}</span>
+              {% endif %}
+              <span class="kr-tag kr-tag-ok" style="margin-left:6px; font-size:10px;">{{ t('market.published') }}</span>
+            </div>
+
+            {% if app.description %}
+              <p class="kr-text-muted" style="font-size:12px; margin-top:10px; line-height:1.45;">
+                {{ app.description[:140] }}{% if app.description|length > 140 %}…{% endif %}
+              </p>
+            {% endif %}
+          </div>
+
+          <div class="kr-mt-lg" style="display:flex; justify-content:flex-end;">
+            <a href="{{ url_for('marketplace_download', slug=app.slug) }}"
+               class="kr-btn kr-btn-xs kr-btn-gold">
+              {{ t('market.download') }}
+            </a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="kr-text-muted kr-mt-lg" style="font-size:12px;">
+      {{ t('market.no_public_apps') }}
+    </p>
+  {% endif %}
+</section>
+
+{# =========================================================
+   TUS APPS — PANEL DEL CREADOR
+========================================================= #}
+<section class="kr-card kr-mt-lg">
+  <h2 class="kr-card-title">{{ t('market.your_apps_title') }}</h2>
+  <p class="kr-card-label">{{ t('market.your_apps_desc') }}</p>
+
+  {% if my_apps %}
+    <div class="kr-mt-lg" style="overflow:auto;">
+      <table style="width:100%; font-size:12px;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">{{ t('market.th_title') }}</th>
+            <th style="text-align:left;">{{ t('market.th_platform') }}</th>
+            <th style="text-align:left;">{{ t('market.th_status') }}</th>
+            <th style="text-align:left;">{{ t('market.th_price') }}</th>
+            <th style="text-align:right;">{{ t('market.th_actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in my_apps %}
+            {% set price = (app.price_cents or 0) / 100 %}
+            <tr>
+              <td style="font-weight:700;">{{ app.title or t('market.app_no_title') }}</td>
+              <td>{{ app.platform or "–" }}</td>
+              <td>
+                {% if app.status == 'published' %}
+                  <span class="kr-tag kr-tag-ok">{{ t('market.status_published') }}</span>
+                {% else %}
+                  <span class="kr-tag kr-tag-pending">{{ t('market.status_draft') }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if price == 0 %}{{ t('market.free') }}{% else %}€ {{ price|round(2) }}{% endif %}
+              </td>
+              <td style="text-align:right;">
+                <form method="post"
+                      action="{{ url_for('marketplace_update_status', app_id=app.id) }}"
+                      style="display:inline-flex; gap:6px;">
+                  {% if app.status != 'published' %}
+                    <input type="hidden" name="status" value="published">
+                    <button class="kr-btn kr-btn-xs kr-btn-gold" type="submit">
+                      {{ t('market.btn_publish') }}
+                    </button>
+                  {% else %}
+                    <input type="hidden" name="status" value="draft">
+                    <button class="kr-btn kr-btn-xs" type="submit">
+                      {{ t('market.btn_to_draft') }}
+                    </button>
+                  {% endif %}
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="kr-text-muted kr-mt-lg" style="font-size:12px;">
+      {{ t('market.no_my_apps') }}
+    </p>
+  {% endif %}
+</section>
+
+{% endblock %}

@@ -1,184 +1,455 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="debug" content="TEST-KING-ROLON">
-  <title>KING ROLON AUTOMATIONS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+{# templates/base.html — KR FUTURE APP SHELL v7 PREMIUM ✅ - Sidebar premium
+estable - Cuenta y Perfil separados correctamente - Botón "Cuenta" -> settings -
+Botón con avatar/nombre -> profile_me - Compatible con videos, ranking,
+dashboard, settings, profile #}
+<!doctype html>
+<html lang="{{ (lang or 'es')|e }}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Estilos embebidos -->
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    .kr-body{background:#050509;color:#f3f3f3;display:flex;min-height:100vh}
-    .kr-sidebar{width:260px;background:radial-gradient(circle at top,#14121a 0,#050509 60%);border-right:1px solid rgba(255,255,255,.06);padding:24px 20px;display:flex;flex-direction:column;justify-content:space-between}
-    .kr-logo{display:flex;align-items:center;gap:10px;margin-bottom:30px}
-    .kr-crown{font-size:32px;filter:drop-shadow(0 0 8px gold)}
-    .kr-brand-main{font-weight:800;letter-spacing:2px;font-size:18px}
-    .kr-brand-sub{font-size:11px;text-transform:uppercase;letter-spacing:3px;color:#b0b0b0}
-    .kr-nav{display:flex;flex-direction:column;gap:10px}
-    .kr-nav-item{text-decoration:none;color:#c6c6c6;padding:10px 12px;border-radius:10px;font-size:14px;transition:all .2s ease}
-    .kr-nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
-    .kr-active{background:linear-gradient(90deg,#e0b15b,#f7e39c);color:#050509!important;font-weight:600}
-    .kr-sidebar-footer{border-top:1px solid rgba(255,255,255,.06);padding-top:16px;font-size:12px}
-    .kr-user-label{color:#8c8c8c;display:block;margin-bottom:4px}
-    .kr-user-name{font-weight:600}
-    .kr-main{flex:1;padding:24px 32px;display:flex;flex-direction:column}
-    .kr-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
-    .kr-page-title{font-size:24px;font-weight:700}
-    .kr-page-subtitle{font-size:13px;color:#a0a0a0;margin-top:4px}
-    .kr-header-actions{display:flex;gap:10px}
-    .kr-btn{border:none;padding:8px 16px;border-radius:999px;font-size:13px;cursor:pointer;background:#22222a;color:#f3f3f3}
-    .kr-btn-outline{border:1px solid rgba(255,255,255,.15)}
-    .kr-btn-gold{background:linear-gradient(90deg,#e0b15b,#f7e39c);color:#050509;font-weight:600}
-    .kr-content{flex:1}
-    .kr-grid{display:grid;gap:18px}
-    .kr-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    .kr-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    @media (max-width:960px){.kr-grid-3,.kr-grid-2{grid-template-columns:1fr}.kr-sidebar{display:none}}
-    .kr-card{background:radial-gradient(circle at top left,#171320 0,#07060c 60%);border-radius:18px;padding:18px 18px 20px;border:1px solid rgba(255,255,255,.06);box-shadow:0 12px 30px rgba(0,0,0,.6)}
-    .kr-card-title{font-size:15px;margin-bottom:10px}
-    .kr-card-number{font-size:26px;font-weight:700;margin-bottom:6px}
-    .kr-card-label{font-size:12px;color:#a0a0a0}
-    .kr-list{list-style:none;display:flex;flex-direction:column;gap:10px;font-size:13px}
-    .kr-list li{display:flex;justify-content:space-between;align-items:center;gap:8px}
-    .kr-tag{padding:4px 10px;border-radius:999px;font-size:11px;background:rgba(255,255,255,.06)}
-    .kr-tag-ok{background:rgba(46,204,113,.16);color:#6ee7a0}
-    .kr-tag-pending{background:rgba(241,196,15,.16);color:#f6d86b}
-    .kr-tag-off{background:rgba(231,76,60,.16);color:#f58b83}
-    .kr-dot{width:8px;height:8px;border-radius:999px}
-    .kr-dot-ok{background:#2ecc71}.kr-dot-pending{background:#f1c40f}.kr-dot-off{background:#e74c3c}
-    .kr-mt-lg{margin-top:22px}
+    <title>{% block title %}KR{% endblock %}</title>
 
-    /* ===== Modal ===== */
-    .kr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
-    .kr-modal{width:min(560px,92vw);background:rgba(18,18,24,.98);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px 22px 18px;box-shadow:0 25px 80px rgba(0,0,0,.6)}
-    .kr-modal h3{font-size:18px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
-    .kr-field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-    .kr-field label{font-size:12px;color:#a9a9a9}
-    .kr-input,.kr-select{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#f3f3f3;outline:none}
-    .kr-input::placeholder{color:#8b8b8b}
-    .kr-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
-    .is-open{display:flex}
-  </style>
-</head>
-<body class="kr-body">
-  <aside class="kr-sidebar">
-    <div>
-      <div class="kr-logo">
-        <div class="kr-crown">👑</div>
-        <div class="kr-brand">
-          <span class="kr-brand-main">KING ROLON</span>
-          <span class="kr-brand-sub">AUTOMATIONS</span>
+    <meta
+      name="description"
+      content="{{ (t('app.meta_desc') if t else '')|default('', true)|e }}"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    {% set _ver = (kr_asset_ver if kr_asset_ver is defined else '1') %}
+
+    <link
+      rel="icon"
+      href="{{ url_for('static', filename='img/favicon.ico') }}?v={{ _ver }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}?v={{ _ver }}"
+    />
+
+    {% block head %}{% endblock %}
+  </head>
+
+  {% set _ap = (active_page or '')|string %} {% set _views = (app.view_functions
+  if app is defined and app.view_functions is defined else {}) %} {% set
+  _has_auth = ('auth' in _views) %} {% set _has_set_language = ('set_language'
+  in _views) %} {% set _has_ranking = ('ranking' in _views) %} {% set
+  _has_dashboard = ('dashboard' in _views) %} {% set _has_core = ('core' in
+  _views) %} {% set _has_automatizaciones = ('automatizaciones' in _views) %} {%
+  set _has_store = ('store' in _views) %} {% set _has_marketplace =
+  ('marketplace' in _views) %} {% set _has_creator_panel = ('creator_panel' in
+  _views) %} {% set _has_settings = ('settings' in _views) %} {% set
+  _has_profile_me = ('profile_me' in _views) %} {% set _has_logout = ('logout'
+  in _views) %} {% set _has_videos_feed = ('videos_feed' in _views) or
+  ('vm_videos_feed' in _views) %} {% set _ep_videos_feed = ('videos_feed' if
+  ('videos_feed' in _views) else ('vm_videos_feed' if ('vm_videos_feed' in
+  _views) else '')) %} {% set _has_videos_library = ('videos_library' in _views)
+  or ('vm_videos_library' in _views) %} {% set _ep_videos_library =
+  ('videos_library' if ('videos_library' in _views) else ('vm_videos_library' if
+  ('vm_videos_library' in _views) else '')) %} {% set me = current_user if
+  current_user else None %} {% set _me_name = (me.get('name') if me and me is
+  mapping else (me.name if me and me.name is defined else '')) %} {% set
+  _me_email = (me.get('email') if me and me is mapping else (me.email if me and
+  me.email is defined else '')) %} {% set _me_avatar = (me.get('avatar_url') if
+  me and me is mapping else (me.avatar_url if me and me.avatar_url is defined
+  else '')) %} {% set _me_initial = ((_me_name or _me_email or 'U')[:1] | upper)
+  %} {% set _lbl_videos = (t('nav.videos') if t else 'Videos') %} {% set
+  _lbl_library = (t('nav.library') if t else 'Mi biblioteca') %} {% set
+  _lbl_ranking = (t('nav.ranking') if t else 'Ranking') %} {% set _lbl_dashboard
+  = (t('nav.dashboard') if t else 'Dashboard') %} {% set _lbl_core =
+  (t('nav.core') if t else 'Core') %} {% set _lbl_automations =
+  (t('nav.automations') if t else 'Automatizaciones') %} {% set _lbl_store =
+  (t('nav.store') if t else 'Store') %} {% set _lbl_marketplace =
+  (t('nav.marketplace') if t else 'Marketplace') %} {% set _lbl_creator =
+  (t('nav.creator') if t else 'Creator') %} {% set _lbl_account =
+  (t('nav.account') if t else 'Cuenta') %} {% set _lbl_logout = (t('nav.logout')
+  if t else 'Salir') %} {% if _ep_videos_feed %} {% set _home_href =
+  url_for(_ep_videos_feed) %} {% elif _has_dashboard %} {% set _home_href =
+  url_for('dashboard') %} {% else %} {% set _home_href = '#' %} {% endif %} {%
+  if _has_profile_me %} {% set _profile_href = url_for('profile_me') %} {% elif
+  _has_settings %} {% set _profile_href = url_for('settings') %} {% else %} {%
+  set _profile_href = '#' %} {% endif %} {% set _disable_page_head =
+  (disable_page_head if disable_page_head is defined else false) %} {% set
+  _body_page_class = ('kr-page-' ~ _ap) if _ap else 'kr-page-generic' %}
+
+  <body
+    class="kr-body {{ _body_page_class }}{% if _ap == 'auth' %} kr-page-auth{% endif %}"
+  >
+    {% if _ap != 'auth' and me %}
+
+    <div class="kr-shell">
+      <aside class="kr-sidebar" id="krSidebar" aria-label="Sidebar principal">
+        <div class="kr-sidebar-top">
+          <a
+            class="kr-brand kr-brand-compact"
+            href="{{ _home_href }}"
+            aria-label="KR Home"
+            title="KR Home"
+          >
+            <span class="kr-brand-mark" aria-hidden="true">
+              <span class="kr-brand-kr">KR</span>
+              <span class="kr-brand-crown">👑</span>
+            </span>
+          </a>
+
+          <button
+            class="kr-icon-btn"
+            type="button"
+            id="krSidebarToggle"
+            aria-label="Alternar menú"
+            aria-controls="krSidebar"
+            aria-expanded="false"
+            title="Menú"
+          >
+            ☰
+          </button>
         </div>
-      </div>
 
-      <nav class="kr-nav">
-        <a href="{{ url_for('dashboard') }}" class="kr-nav-item kr-active">Dashboard</a>
-        <a href="#" class="kr-nav-item">Tareas automáticas</a>
-        <a href="#" class="kr-nav-item">Conexiones</a>
-        <a href="#" class="kr-nav-item">Ingresos</a>
-        <a href="#" class="kr-nav-item">Configuración</a>
-      </nav>
+        <nav class="kr-side-nav" aria-label="Navegación principal">
+          <a
+            class="kr-side-link {% if _ap == 'videos' %}is-active{% endif %}"
+            href="{% if _ep_videos_feed %}{{ url_for(_ep_videos_feed) }}{% else %}#{% endif %}"
+            aria-label="{{ _lbl_videos }}"
+            title="{{ _lbl_videos }}"
+          >
+            <span class="kr-side-ico">▶</span>
+            <span class="kr-side-txt">{{ _lbl_videos }}</span>
+          </a>
+
+          {% if _has_videos_library and _ep_videos_library %}
+          <a
+            class="kr-side-link {% if _ap == 'library' %}is-active{% endif %}"
+            href="{{ url_for(_ep_videos_library) }}"
+            aria-label="{{ _lbl_library }}"
+            title="{{ _lbl_library }}"
+          >
+            <span class="kr-side-ico">★</span>
+            <span class="kr-side-txt">{{ _lbl_library }}</span>
+          </a>
+          {% endif %} {% if _has_ranking %}
+          <a
+            class="kr-side-link {% if _ap == 'ranking' %}is-active{% endif %}"
+            href="{{ url_for('ranking') }}"
+            aria-label="{{ _lbl_ranking }}"
+            title="{{ _lbl_ranking }}"
+          >
+            <span class="kr-side-ico">🏆</span>
+            <span class="kr-side-txt">{{ _lbl_ranking }}</span>
+          </a>
+          {% endif %}
+
+          <div class="kr-side-sep"></div>
+
+          {% if _has_dashboard %}
+          <a
+            class="kr-side-link {% if _ap == 'dashboard' %}is-active{% endif %}"
+            href="{{ url_for('dashboard') }}"
+            aria-label="{{ _lbl_dashboard }}"
+            title="{{ _lbl_dashboard }}"
+          >
+            <span class="kr-side-ico">▦</span>
+            <span class="kr-side-txt">{{ _lbl_dashboard }}</span>
+          </a>
+          {% endif %} {% if _has_core %}
+          <a
+            class="kr-side-link {% if _ap == 'core' %}is-active{% endif %}"
+            href="{{ url_for('core') }}"
+            aria-label="{{ _lbl_core }}"
+            title="{{ _lbl_core }}"
+          >
+            <span class="kr-side-ico">◉</span>
+            <span class="kr-side-txt">{{ _lbl_core }}</span>
+          </a>
+          {% endif %} {% if _has_automatizaciones %}
+          <a
+            class="kr-side-link {% if _ap == 'automatizaciones' %}is-active{% endif %}"
+            href="{{ url_for('automatizaciones') }}"
+            aria-label="{{ _lbl_automations }}"
+            title="{{ _lbl_automations }}"
+          >
+            <span class="kr-side-ico">⚡</span>
+            <span class="kr-side-txt">{{ _lbl_automations }}</span>
+          </a>
+          {% endif %} {% if _has_store %}
+          <a
+            class="kr-side-link {% if _ap == 'store' %}is-active{% endif %}"
+            href="{{ url_for('store') }}"
+            aria-label="{{ _lbl_store }}"
+            title="{{ _lbl_store }}"
+          >
+            <span class="kr-side-ico">⧉</span>
+            <span class="kr-side-txt">{{ _lbl_store }}</span>
+          </a>
+          {% endif %} {% if _has_marketplace %}
+          <a
+            class="kr-side-link {% if _ap == 'marketplace' %}is-active{% endif %}"
+            href="{{ url_for('marketplace') }}"
+            aria-label="{{ _lbl_marketplace }}"
+            title="{{ _lbl_marketplace }}"
+          >
+            <span class="kr-side-ico">⬡</span>
+            <span class="kr-side-txt">{{ _lbl_marketplace }}</span>
+          </a>
+          {% endif %} {% if _has_creator_panel %}
+          <a
+            class="kr-side-link {% if _ap == 'creator' %}is-active{% endif %}"
+            href="{{ url_for('creator_panel') }}"
+            aria-label="{{ _lbl_creator }}"
+            title="{{ _lbl_creator }}"
+          >
+            <span class="kr-side-ico">⟡</span>
+            <span class="kr-side-txt">{{ _lbl_creator }}</span>
+          </a>
+          {% endif %}
+
+          <div class="kr-side-sep"></div>
+
+          {% if _has_settings %}
+          <a
+            class="kr-side-link {% if _ap == 'settings' %}is-active{% endif %}"
+            href="{{ url_for('settings') }}"
+            aria-label="{{ _lbl_account }}"
+            title="{{ _lbl_account }}"
+          >
+            <span class="kr-side-ico">⚙</span>
+            <span class="kr-side-txt">{{ _lbl_account }}</span>
+          </a>
+          {% endif %} {% if _has_profile_me %}
+          <a
+            class="kr-side-link {% if _ap == 'profile' %}is-active{% endif %}"
+            href="{{ _profile_href }}"
+            aria-label="Perfil"
+            title="Perfil"
+          >
+            <span class="kr-side-ico">👤</span>
+            <span class="kr-side-txt">Perfil</span>
+          </a>
+          {% endif %} {% if _has_logout %}
+          <a
+            class="kr-side-link"
+            href="{{ url_for('logout') }}"
+            aria-label="{{ _lbl_logout }}"
+            title="{{ _lbl_logout }}"
+          >
+            <span class="kr-side-ico">⎋</span>
+            <span class="kr-side-txt">{{ _lbl_logout }}</span>
+          </a>
+          {% endif %}
+
+          <div class="kr-side-sep"></div>
+
+          {% if _has_set_language %}
+          <div class="kr-side-link" style="cursor: default">
+            <span class="kr-side-ico">🌐</span>
+            <span class="kr-side-txt">
+              <span class="kr-lang" aria-label="Language switch">
+                <a
+                  class="kr-lang-pill {% if (lang or 'es') == 'es' %}is-active{% endif %}"
+                  href="{{ url_for('set_language', code='es') }}"
+                  >ES</a
+                >
+                <a
+                  class="kr-lang-pill {% if (lang or 'es') == 'en' %}is-active{% endif %}"
+                  href="{{ url_for('set_language', code='en') }}"
+                  >EN</a
+                >
+                <a
+                  class="kr-lang-pill {% if (lang or 'es') == 'de' %}is-active{% endif %}"
+                  href="{{ url_for('set_language', code='de') }}"
+                  >DE</a
+                >
+              </span>
+            </span>
+          </div>
+          {% endif %}
+
+          <div class="kr-side-sep"></div>
+
+          <a
+            class="kr-side-link {% if _ap == 'profile' %}is-active{% endif %}"
+            href="{{ _profile_href }}"
+            aria-label="Mi perfil"
+            title="Mi perfil"
+          >
+            <span class="kr-side-ico">
+              {% if _me_avatar %}
+              <img
+                src="{{ _me_avatar }}"
+                alt="Mi avatar"
+                style="
+                  width: 100%;
+                  height: 100%;
+                  object-fit: cover;
+                  border-radius: 8px;
+                "
+              />
+              {% else %} {{ _me_initial }} {% endif %}
+            </span>
+            <span class="kr-side-txt">
+              {{ _me_name if _me_name else 'Mi perfil' }}
+            </span>
+          </a>
+        </nav>
+      </aside>
+
+      <div
+        class="kr-mobile-overlay"
+        id="krMobileOverlay"
+        aria-hidden="true"
+      ></div>
+
+      <div class="kr-main">
+        <main class="kr-content" id="krAppContent">
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %}
+          <div class="kr-flashes">
+            {% for category, message in messages %} {% set c = (category or
+            '')|lower %} {% if c in ['error', 'err', 'danger'] %}
+            <div class="kr-alert kr-alert-err">{{ message|safe }}</div>
+            {% elif c in ['success', 'ok'] %}
+            <div class="kr-alert kr-alert-ok">{{ message|safe }}</div>
+            {% elif c in ['warning', 'warn'] %}
+            <div class="kr-alert kr-alert-warn">{{ message|safe }}</div>
+            {% else %}
+            <div class="kr-alert kr-alert-info">{{ message|safe }}</div>
+            {% endif %} {% endfor %}
+          </div>
+          {% endif %} {% endwith %} {% if not _disable_page_head %}
+          <section class="kr-page-head">
+            <h1 class="kr-page-title">{% block page_title %}{% endblock %}</h1>
+            <p class="kr-page-subtitle">
+              {% block page_subtitle %}{% endblock %}
+            </p>
+          </section>
+          {% endif %} {% block content %} {% block app_content %}{% endblock %}
+          {% endblock %}
+
+          <footer class="kr-footer kr-mt-lg">
+            <span class="kr-soft">
+              {{ (t('footer.copy') if t else '© KR') }}
+            </span>
+          </footer>
+        </main>
+      </div>
     </div>
 
-    <div class="kr-sidebar-footer">
-      <span class="kr-user-label">Conectado como</span>
-      <span class="kr-user-name">KING ROLON</span>
-    </div>
-  </aside>
+    <script>
+      (function () {
+        const sidebar = document.getElementById("krSidebar");
+        const overlay = document.getElementById("krMobileOverlay");
+        const btnSidebar = document.getElementById("krSidebarToggle");
+        const mqMobile = window.matchMedia("(max-width: 860px)");
+        const STORAGE_KEY = "kr_sidebar_force_open";
 
-  <main class="kr-main">
-    <header class="kr-header">
-      <div>
-        <h1 class="kr-page-title">Panel central</h1>
-        <p class="kr-page-subtitle">Controla todas tus plataformas desde un solo lugar.</p>
-      </div>
-      <div class="kr-header-actions">
-        <button class="kr-btn kr-btn-outline">Modo demo</button>
-        <button id="kr-open-modal" class="kr-btn kr-btn-gold">+ Nueva automatización</button>
+        function syncAria() {
+          if (!btnSidebar || !sidebar) return;
+          const expanded =
+            sidebar.classList.contains("is-open") ||
+            sidebar.classList.contains("is-force-open");
+          btnSidebar.setAttribute("aria-expanded", expanded ? "true" : "false");
+        }
+
+        function openMobile() {
+          if (!sidebar || !overlay) return;
+          sidebar.classList.add("is-open");
+          overlay.classList.add("is-open");
+          overlay.setAttribute("aria-hidden", "false");
+          document.body.style.overflow = "hidden";
+          syncAria();
+        }
+
+        function closeMobile() {
+          if (!sidebar || !overlay) return;
+          sidebar.classList.remove("is-open");
+          overlay.classList.remove("is-open");
+          overlay.setAttribute("aria-hidden", "true");
+          document.body.style.overflow = "";
+          syncAria();
+        }
+
+        function toggleMobile() {
+          if (!sidebar) return;
+          if (sidebar.classList.contains("is-open")) closeMobile();
+          else openMobile();
+        }
+
+        function toggleDesktopPin() {
+          if (!sidebar) return;
+          sidebar.classList.toggle("is-force-open");
+          try {
+            localStorage.setItem(
+              STORAGE_KEY,
+              sidebar.classList.contains("is-force-open") ? "1" : "0",
+            );
+          } catch (e) {}
+          syncAria();
+        }
+
+        function toggleSidebar() {
+          if (!sidebar) return;
+          if (mqMobile.matches) toggleMobile();
+          else toggleDesktopPin();
+        }
+
+        function loadState() {
+          if (!sidebar) return;
+          let v = null;
+          try {
+            v = localStorage.getItem(STORAGE_KEY);
+          } catch (e) {}
+          if (v === "1") sidebar.classList.add("is-force-open");
+          syncAria();
+        }
+
+        function onMqChange() {
+          closeMobile();
+        }
+
+        if (btnSidebar) btnSidebar.addEventListener("click", toggleSidebar);
+        if (overlay) overlay.addEventListener("click", closeMobile);
+
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape" && mqMobile.matches) {
+            closeMobile();
+          }
+        });
+
+        if (mqMobile.addEventListener) {
+          mqMobile.addEventListener("change", onMqChange);
+        } else if (mqMobile.addListener) {
+          mqMobile.addListener(onMqChange);
+        }
+
+        loadState();
+      })();
+    </script>
+
+    {% elif _ap != 'auth' %}
+
+    <header class="kr-topbar">
+      <div class="kr-container kr-topbar-inner">
+        <a
+          class="kr-brand"
+          href="{% if _has_auth %}{{ url_for('auth') }}{% else %}#{% endif %}"
+        >
+          <span class="kr-crown">👑</span>
+          <span class="kr-brand-name">KR</span>
+        </a>
       </div>
     </header>
 
-    <section class="kr-content">
-      {% block content %}{% endblock %}
-    </section>
-  </main>
+    <main class="kr-container kr-mt-lg">
+      {% block content_fallback %} {{ self.content() }} {% endblock %}
+      <footer class="kr-footer kr-mt-lg">
+        <span class="kr-soft">© KR</span>
+      </footer>
+    </main>
 
-  <!-- Modal: Nueva automatización -->
-  <div id="kr-modal-overlay" class="kr-modal-overlay" aria-hidden="true">
-    <div class="kr-modal" role="dialog" aria-modal="true" aria-labelledby="kr-modal-title">
-      <h3 id="kr-modal-title">➕ Nueva automatización</h3>
+    {% else %}
 
-      <div class="kr-field">
-        <label for="kr-nombre">Nombre de la tarea</label>
-        <input id="kr-nombre" class="kr-input" type="text" placeholder="Ej: Subir clip diario a TikTok">
-      </div>
+    <main class="kr-container">{{ self.content() }}</main>
 
-      <div class="kr-field">
-        <label for="kr-plataforma">Plataforma</label>
-        <select id="kr-plataforma" class="kr-select">
-          <option>TikTok</option>
-          <option>Facebook</option>
-          <option>YouTube</option>
-          <option>Twitch</option>
-          <option>Global</option>
-        </select>
-      </div>
-
-      <div class="kr-field">
-        <label for="kr-frecuencia">Frecuencia</label>
-        <input id="kr-frecuencia" class="kr-input" type="text" placeholder="Cada 24h / Después de cada stream">
-      </div>
-
-      <div class="kr-modal-actions">
-        <button id="kr-close-modal" class="kr-btn kr-btn-outline">Cancelar</button>
-        <button id="kr-save-task" class="kr-btn kr-btn-gold">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- JS mínimo: abrir/cerrar modal y llamar a la API correcta -->
-  <script>
-    (function () {
-      const openBtn   = document.getElementById('kr-open-modal');
-      const closeBtn  = document.getElementById('kr-close-modal');
-      const overlay   = document.getElementById('kr-modal-overlay');
-      const saveBtn   = document.getElementById('kr-save-task');
-
-      function openModal(){ overlay.classList.add('is-open'); overlay.setAttribute('aria-hidden','false'); }
-      function closeModal(){ overlay.classList.remove('is-open'); overlay.setAttribute('aria-hidden','true'); }
-      openBtn.addEventListener('click', openModal);
-      closeBtn.addEventListener('click', closeModal);
-      overlay.addEventListener('click', (e)=>{ if(e.target === overlay) closeModal(); });
-
-      async function guardarTarea() {
-        const nombre     = document.getElementById('kr-nombre').value.trim();
-        const plataforma = document.getElementById('kr-plataforma').value.trim();
-        const frecuencia = document.getElementById('kr-frecuencia').value.trim();
-
-        if (!nombre) { alert('Ponle un nombre a la tarea 👑'); return; }
-
-        try {
-          const resp = await fetch("{{ url_for('api_create_task') }}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nombre, plataforma, frecuencia })
-          });
-
-          if (!resp.ok) {
-            const text = await resp.text();
-            throw new Error('HTTP '+resp.status+' — '+text);
-          }
-
-          closeModal();
-          location.reload(); // refresca el dashboard con la nueva tarea
-        } catch (err) {
-          console.error(err);
-          alert('No se pudo guardar la tarea. Revisa la consola.');
-        }
-      }
-      saveBtn.addEventListener('click', guardarTarea);
-    })();
-  </script>
-</body>
+    {% endif %} {% block scripts %}{% endblock %} {% block extra_scripts %}{%
+    endblock %}
+  </body>
 </html>

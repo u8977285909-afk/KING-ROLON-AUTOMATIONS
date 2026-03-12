@@ -1,0 +1,369 @@
+{# ========================================================= KING ROLON
+AUTOMATIONS — PROFILE PRO MAX limpio · estable · listo para profile.js +
+style.css ========================================================= #} {%
+extends "base.html" %} {% set active_page = "profile" %} {% set
+disable_page_head = true %} {% set _views = app.view_functions if app is defined
+and app.view_functions is defined else {} %} {% if "watch_video" in _views %} {%
+set EP_WATCH = "watch_video" %} {% elif "vm_watch_video" in _views %} {% set
+EP_WATCH = "vm_watch_video" %} {% else %} {% set EP_WATCH = "" %} {% endif %} {%
+if "stream_video" in _views %} {% set EP_STREAM = "stream_video" %} {% elif
+"vm_stream_video" in _views %} {% set EP_STREAM = "vm_stream_video" %} {% else
+%} {% set EP_STREAM = "" %} {% endif %} {% if "video_thumb" in _views %} {% set
+EP_THUMB = "video_thumb" %} {% elif "vm_video_thumb" in _views %} {% set
+EP_THUMB = "vm_video_thumb" %} {% else %} {% set EP_THUMB = "" %} {% endif %} {%
+if "api_follow_toggle_v1" in _views %} {% set _follow_endpoint =
+"api_follow_toggle_v1" %} {% elif "api_follow_toggle" in _views %} {% set
+_follow_endpoint = "api_follow_toggle" %} {% else %} {% set _follow_endpoint =
+"" %} {% endif %} {% block title %} {{ (profile_user.get('name') if profile_user
+else 'Perfil') or 'Perfil' }} | KING ROLON {% endblock %} {% block content %} {%
+set _u = profile_user or {} %} {% set _uid = _u.get("id", 0) %} {% set
+_is_public = _u.get("is_public", 1) %} {% set _is_owner = me and (me|int ==
+_uid|int) %} {% set _username = '' if _u.get("username") in [None, "None"] else
+(_u.get("username") or "") %} {% set _email_safe = '' if _u.get("email") in
+[None, "None"] else (_u.get("email") or "") %} {% set _handle = _username or
+_email_safe or "user" %} {% set _name = '' if _u.get("name") in [None, "None"]
+else (_u.get("name") or _username or "Usuario") %} {% set _bio = '' if
+_u.get("bio") in [None, "None"] else (_u.get("bio") or "") %} {% set _website =
+'' if _u.get("website") in [None, "None"] else (_u.get("website") or "") %} {%
+set _avatar = '' if _u.get("avatar_url") in [None, "None"] else
+(_u.get("avatar_url") or "") %} {% set _banner = '' if _u.get("banner_url") in
+[None, "None"] else (_u.get("banner_url") or "") %} {% set _verified =
+_u.get("verified", 0) %} {% set _public_slug = '' if _u.get("public_slug") in
+[None, "None"] else (_u.get("public_slug") or "") %} {% set _points =
+stats.points or 0 %} {% set _followers = stats.followers or 0 %} {% set
+_following_count = stats.following or 0 %} {% set _videos_public =
+stats.videos_public or 0 %} {% set _likes_received = stats.likes_received or 0
+%} {% set _collections_received = stats.collections_received or 0 %} {% set
+_can_follow = can_follow if can_follow is defined else false %} {% set
+_following = following if following is defined else false %} {% set _banner_x =
+50 %} {% set _banner_y = 50 %} {% set _banner_scale = 1 %} {% if
+banner_transform is defined and banner_transform %} {% set _banner_x =
+banner_transform.get("x", 50) %} {% set _banner_y = banner_transform.get("y",
+50) %} {% set _banner_scale = banner_transform.get("scale", 1) %} {% endif %} {%
+if _points >= 10000 %} {% set _level = "KR GOD" %} {% set _level_class =
+"kr-level-god" %} {% elif _points >= 5000 %} {% set _level = "DIAMOND" %} {% set
+_level_class = "kr-level-diamond" %} {% elif _points >= 2000 %} {% set _level =
+"GOLD" %} {% set _level_class = "kr-level-gold" %} {% elif _points >= 500 %} {%
+set _level = "SILVER" %} {% set _level_class = "kr-level-silver" %} {% else %}
+{% set _level = "BRONZE" %} {% set _level_class = "kr-level-bronze" %} {% endif
+%} {% if _follow_endpoint %} {% set _follow_url = url_for(_follow_endpoint,
+target_id=_uid) %} {% else %} {% set _follow_url = "/api/follow/" ~ _uid %} {%
+endif %}
+
+<div class="kr-page kr-profile-page">
+  <div class="kr-profile-shell">
+    {% if (not _is_public) and (not _is_owner) %}
+
+    <section class="kr-private-profile">
+      <div class="kr-private-card">
+        <div class="kr-private-icon">🔒</div>
+        <h2>Perfil privado</h2>
+        <p>Este creador tiene su perfil en modo privado.</p>
+      </div>
+    </section>
+
+    {% else %}
+
+    <section class="kr-profile-hero">
+      <div
+        class="kr-profile-banner"
+        {%
+        if
+        _is_owner
+        %}data-banner-editor="1"
+        {%
+        endif
+        %}
+        data-x="{{ _banner_x }}"
+        data-y="{{ _banner_y }}"
+        data-scale="{{ _banner_scale }}"
+      >
+        {% if _banner %}
+        <div class="kr-profile-banner-media-wrap">
+          <img
+            src="{{ _banner }}"
+            alt="Banner de {{ _name }}"
+            class="kr-profile-banner-img"
+            id="krProfileBannerImage"
+            style="transform: translate(-{{ 50 - _banner_x }}%, -{{ 50 - _banner_y }}%) scale({{ _banner_scale }});"
+          />
+        </div>
+        {% else %}
+        <div class="kr-profile-banner-fallback"></div>
+        {% endif %}
+
+        <div class="kr-profile-banner-overlay"></div>
+        <div class="kr-profile-banner-noise"></div>
+        <div class="kr-profile-banner-shine"></div>
+
+        {% if _is_owner and "settings" in _views %}
+        <div class="kr-banner-owner-tools">
+          <a href="{{ url_for('settings') }}#banner" class="kr-banner-edit-btn">
+            Cambiar portada
+          </a>
+
+          {% if _banner %}
+          <button type="button" class="kr-banner-tool-btn" id="krBannerMoveBtn">
+            Mover
+          </button>
+          <button
+            type="button"
+            class="kr-banner-tool-btn"
+            id="krBannerZoomOutBtn"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            class="kr-banner-tool-btn"
+            id="krBannerZoomInBtn"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            class="kr-banner-tool-btn"
+            id="krBannerResetBtn"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            class="kr-banner-tool-btn kr-banner-tool-btn-gold"
+            id="krBannerSaveBtn"
+          >
+            Guardar
+          </button>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="kr-profile-hero-card">
+        <div class="kr-profile-identity-block">
+          <div class="kr-profile-avatar-box">
+            {% if _avatar %}
+            <img
+              src="{{ _avatar }}"
+              alt="Avatar de {{ _name }}"
+              class="kr-profile-avatar"
+            />
+            {% else %}
+            <div class="kr-profile-avatar kr-profile-avatar-fallback">
+              <span>{{ (_handle[:1] or "U")|upper }}</span>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="kr-profile-main">
+            <div class="kr-profile-topline">
+              <div class="kr-profile-heading">
+                <div class="kr-profile-kicker">KING ROLON CREATOR</div>
+
+                <h1 class="kr-profile-name">
+                  {{ _name or "Usuario" }} {% if _verified %}
+                  <span class="kr-profile-verified" title="Verificado">✔</span>
+                  {% endif %}
+                </h1>
+
+                <div class="kr-profile-handle">@{{ _handle }}</div>
+
+                <div class="kr-profile-badge-row">
+                  <span class="kr-profile-badge {{ _level_class }}"
+                    >{{ _level }}</span
+                  >
+
+                  {% if _is_public %}
+                  <span class="kr-profile-badge kr-profile-badge-green"
+                    >Público</span
+                  >
+                  {% else %}
+                  <span class="kr-profile-badge kr-profile-badge-muted"
+                    >Privado</span
+                  >
+                  {% endif %} {% if _is_owner %}
+                  <span class="kr-profile-badge">Tu perfil</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="kr-profile-actions">
+                {% if _can_follow %}
+                <button
+                  type="button"
+                  class="kr-follow-btn-premium{% if _following %} is-following{% endif %}"
+                  data-follow-url="{{ _follow_url }}"
+                  data-following="{% if _following %}1{% else %}0{% endif %}"
+                >
+                  <span class="kr-follow-btn-text">
+                    {% if _following %}Siguiendo{% else %}Seguir{% endif %}
+                  </span>
+                </button>
+                {% endif %} {% if _is_owner and "settings" in _views %}
+                <a href="{{ url_for('settings') }}" class="kr-profile-edit-btn">
+                  Editar perfil
+                </a>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="kr-profile-bio">
+              {% if _bio %} {{ _bio }} {% else %} Este creador todavía no ha
+              agregado una bio. {% endif %}
+            </div>
+
+            <div class="kr-profile-meta-row">
+              {% if _website %}
+              <a
+                href="{{ _website }}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="kr-profile-website"
+              >
+                {{ _website }}
+              </a>
+              {% endif %} {% if _public_slug %}
+              <span class="kr-profile-public-link">/u/{{ _public_slug }}</span>
+              {% endif %}
+            </div>
+
+            <div class="kr-profile-stats-grid">
+              <div class="kr-profile-stat-card">
+                <div class="kr-profile-stat-num" id="kr-stat-followers">
+                  {{ _followers }}
+                </div>
+                <div class="kr-profile-stat-label">Followers</div>
+              </div>
+
+              <div class="kr-profile-stat-card">
+                <div class="kr-profile-stat-num">{{ _following_count }}</div>
+                <div class="kr-profile-stat-label">Following</div>
+              </div>
+
+              <div class="kr-profile-stat-card">
+                <div class="kr-profile-stat-num">{{ _videos_public }}</div>
+                <div class="kr-profile-stat-label">Videos</div>
+              </div>
+
+              <div class="kr-profile-stat-card">
+                <div class="kr-profile-stat-num">{{ _likes_received }}</div>
+                <div class="kr-profile-stat-label">Likes</div>
+              </div>
+
+              <div class="kr-profile-stat-card">
+                <div class="kr-profile-stat-num">
+                  {{ _collections_received }}
+                </div>
+                <div class="kr-profile-stat-label">Saves</div>
+              </div>
+
+              <div class="kr-profile-stat-card kr-profile-stat-card-accent">
+                <div class="kr-profile-stat-num">{{ _points }}</div>
+                <div class="kr-profile-stat-label">KR Points</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="kr-profile-content">
+      <div class="kr-profile-section-head">
+        <div>
+          <div class="kr-profile-section-kicker">CONTENT</div>
+          <h2 class="kr-profile-section-title">Videos públicos</h2>
+          <div class="kr-profile-section-sub">
+            {{ videos|length if videos else 0 }} publicados
+          </div>
+        </div>
+      </div>
+
+      {% if videos and videos|length > 0 %}
+      <div class="kr-profile-video-grid">
+        {% for v in videos %} {% if v is mapping %} {% set _vid = v.get("id") %}
+        {% set _vtitle = v.get("title") or "Sin título" %} {% set _vcreated =
+        v.get("created_at") or "" %} {% set _vdesc = '' if v.get("description")
+        in [None, "None"] else (v.get("description") or "") %} {% set _vthumb =
+        '' if v.get("thumbnail_filename") in [None, "None"] else
+        (v.get("thumbnail_filename") or "") %} {% else %} {% set _vid = v.id %}
+        {% set _vtitle = v.title or "Sin título" %} {% set _vcreated =
+        v.created_at or "" %} {% set _vdesc = '' if v.description in [None,
+        "None"] else (v.description or "") %} {% set _vthumb = '' if
+        v.thumbnail_filename in [None, "None"] else (v.thumbnail_filename or "")
+        %} {% endif %}
+
+        <article class="kr-profile-video-card">
+          <a
+            class="kr-profile-video-thumb-link"
+            href="{% if EP_WATCH %}{{ url_for(EP_WATCH, video_id=_vid) }}{% else %}/videos/watch/{{ _vid }}{% endif %}"
+            aria-label="Ver video"
+          >
+            <div class="kr-profile-video-thumb-frame">
+              {% if _vthumb and EP_THUMB %}
+              <img
+                src="{{ url_for(EP_THUMB, video_id=_vid) }}"
+                alt="{{ _vtitle }}"
+                class="kr-profile-video-thumb-image"
+                loading="lazy"
+                decoding="async"
+              />
+              {% endif %}
+
+              <video
+                class="kr-profile-video-thumb{% if _vthumb %} has-thumb{% endif %}"
+                muted
+                preload="metadata"
+                playsinline
+                onmouseenter="
+                  try {
+                    this.play();
+                  } catch (e) {}
+                "
+                onmouseleave="
+                  try {
+                    this.pause();
+                    this.currentTime = 0;
+                  } catch (e) {}
+                "
+              >
+                {% if EP_STREAM %}
+                <source src="{{ url_for(EP_STREAM, video_id=_vid) }}" />
+                {% else %}
+                <source src="/videos/stream/{{ _vid }}" />
+                {% endif %}
+              </video>
+
+              <div class="kr-profile-video-thumb-overlay">
+                <div class="kr-profile-video-play">▶</div>
+              </div>
+            </div>
+          </a>
+
+          <div class="kr-profile-video-body">
+            <div class="kr-profile-video-title">{{ _vtitle }}</div>
+
+            {% if _vdesc %}
+            <div class="kr-profile-video-desc">{{ _vdesc }}</div>
+            {% endif %} {% if _vcreated %}
+            <div class="kr-profile-video-meta">{{ _vcreated }}</div>
+            {% endif %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="kr-profile-empty-card">
+        <div class="kr-profile-empty-title">Sin videos públicos</div>
+        <div class="kr-profile-empty-sub">
+          Este creador todavía no ha publicado contenido visible.
+        </div>
+      </div>
+      {% endif %}
+    </section>
+
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/profile.js') }}?v={{ kr_asset_ver }}"></script>
+{% endblock %}

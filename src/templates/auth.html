@@ -1,0 +1,685 @@
+{% extends "auth_base.html" %}
+
+{% macro tr(key, fallback) -%}
+  {%- if t is defined and t -%}
+    {%- set v = t(key) -%}
+    {%- if v is none or v == key -%}{{ fallback }}{%- else -%}{{ v }}{%- endif -%}
+  {%- else -%}
+    {{ fallback }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% block title %}
+  {{ tr('auth.title_tab','Acceso') }} | {{ (t('app.name') if t is defined and t else 'KING ROLON AUTOMATIONS') }}
+{% endblock %}
+
+{% block content %}
+{% set current_lang = (lang if lang is defined and lang else 'es') %}
+
+<section class="kr-auth-stage">
+  <div class="kr-auth-bg" aria-hidden="true"></div>
+
+  <canvas id="kr-stars" aria-hidden="true"></canvas>
+  <canvas id="kr-planet" aria-hidden="true"></canvas>
+
+  <!-- ☄️ METEORITO (evento premium) -->
+  <div class="kr-meteor" aria-hidden="true"></div>
+
+  <div class="kr-auth-vignette" aria-hidden="true"></div>
+
+  <!-- TOP BRAND -->
+  <header class="kr-auth-topbrand" aria-hidden="true">
+    <img
+      class="kr-crown-img"
+      src="{{ url_for('static', filename='img/kr_crown_gold.png') }}"
+      alt=""
+      loading="eager"
+      onerror="this.style.display='none';"
+    />
+    <div class="kr-top-title">KING ROLON</div>
+    <div class="kr-top-sub">AUTOMATIONS</div>
+    <div class="kr-top-pill">{{ tr('auth.mode_god','MODO DIOS') }}</div>
+  </header>
+
+  <!-- SCALE WRAPPER -->
+  <div class="kr-auth-scale">
+    <!-- GRID -->
+    <div class="kr-auth-grid"
+         data-i18n-login="{{ tr('auth.btn_enter','Entrar') }}"
+         data-i18n-register="{{ tr('auth.btn_create','Crear cuenta') }}">
+
+      <!-- LEFT -->
+      <aside class="kr-auth-card kr-left">
+        <div class="kr-glass" aria-hidden="true"></div>
+
+        <div class="kr-chip">✨ {{ tr('auth.badge','ACCESO PREMIUM') }}</div>
+
+        <h1 class="kr-left-h1">KING ROLON<br><span>AUTOMATIONS</span></h1>
+
+        <p class="kr-left-p">
+          {{ tr('auth.pitch','Entra al sistema, crea tu cuenta y automatiza como un CEO. Control total del Reino.') }}
+        </p>
+
+        <ul class="kr-left-ul">
+          <li>✔ {{ tr('auth.b1','Dashboard profesional y control del Reino.') }}</li>
+          <li>✔ {{ tr('auth.b2','Automatizaciones, Scheduler y decisiones rápidas.') }}</li>
+          <li>✔ {{ tr('auth.b3','Ecosistema premium para crecer y monetizar.') }}</li>
+        </ul>
+
+        <!-- FEATURE -->
+        <div class="kr-feature">
+          <div class="kr-feature-label">{{ tr('auth.feature_today','FEATURED • HOY') }}</div>
+
+          <div class="kr-feature-track" id="kr-feature-track">
+            <article class="kr-slide is-active" data-slide="0">
+              <div class="kr-slide-tag">CORE IA</div>
+              <div class="kr-slide-title">Crisis del Reino</div>
+              <div class="kr-slide-sub">Chat + memoria + herramientas internas (scheduler, logs, tareas).</div>
+              <div class="kr-slide-meta"><span class="kr-mini-pill">PRO</span> Respuestas rápidas y trazables</div>
+            </article>
+
+            <article class="kr-slide" data-slide="1">
+              <div class="kr-slide-tag">NIVEL DIOS</div>
+              <div class="kr-slide-title">Control total del Reino</div>
+              <div class="kr-slide-sub">KPIs, automatizaciones, control del scheduler y decisiones rápidas estilo CEO.</div>
+              <div class="kr-slide-meta"><span class="kr-mini-pill">KR</span> Sistema PRO</div>
+            </article>
+
+            <article class="kr-slide" data-slide="2">
+              <div class="kr-slide-tag">MARKET</div>
+              <div class="kr-slide-title">Marketplace del Reino</div>
+              <div class="kr-slide-sub">Instala plantillas listas y publica tus creaciones.</div>
+              <div class="kr-slide-meta"><span class="kr-mini-pill">PRO</span> Creator + Ventas</div>
+            </article>
+          </div>
+
+          <div class="kr-dots">
+            <button type="button" class="kr-dot is-active" data-target="0" aria-label="Slide 1"></button>
+            <button type="button" class="kr-dot" data-target="1" aria-label="Slide 2"></button>
+            <button type="button" class="kr-dot" data-target="2" aria-label="Slide 3"></button>
+          </div>
+        </div>
+
+        <!-- SPONSOR -->
+        <div class="kr-sponsor">
+          <div class="kr-sponsor-top">
+            <div class="kr-sponsor-label">{{ tr('auth.sponsor','PATROCINADO') }}</div>
+            <div class="kr-sponsor-brand">Marcuk</div>
+          </div>
+          <div class="kr-sponsor-title">Marca X</div>
+          <div class="kr-sponsor-sub">{{ tr('auth.sponsor_sub_fallback','Conecta tu negocio al mundo.') }}</div>
+          <button type="button" class="kr-sponsor-btn">{{ tr('auth.discover','DESCUBRIR') }}</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT -->
+      <section class="kr-auth-card kr-right">
+        <div class="kr-glass" aria-hidden="true"></div>
+
+        <div class="kr-right-top">
+          <div class="kr-lang">
+            <span class="kr-lang-label">{{ tr('lang.label','Idioma') }}</span>
+            <select id="kr-lang" class="kr-lang-select">
+              <option value="es" {{ 'selected' if current_lang == 'es' else '' }}>ES Español</option>
+              <option value="en" {{ 'selected' if current_lang == 'en' else '' }}>EN English</option>
+              <option value="de" {{ 'selected' if current_lang == 'de' else '' }}>DE Deutsch</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="kr-tabs" role="tablist">
+          <button class="kr-tab active" type="button" data-mode="login" role="tab" aria-selected="true">
+            {{ tr('auth.tab_login','Iniciar sesión') }}
+          </button>
+          <button class="kr-tab" type="button" data-mode="register" role="tab" aria-selected="false">
+            {{ tr('auth.tab_register','Registro') }}
+          </button>
+        </div>
+
+        <form id="kr-auth-form" class="kr-form" method="post" action="{{ url_for('auth') }}" novalidate>
+          <input type="hidden" id="kr-mode" name="action" value="login" />
+
+          <div class="kr-field kr-field-name" style="display:none;">
+            <label class="kr-label" for="kr-name">{{ tr('auth.name_label','Nombre') }}</label>
+            <input id="kr-name" class="kr-input" type="text" name="name" placeholder="{{ tr('auth.name_ph','Tu nombre') }}" maxlength="30" />
+            <div class="kr-error" data-error-for="name"></div>
+          </div>
+
+          <div class="kr-field">
+            <label class="kr-label" for="kr-email">{{ tr('auth.email_label','Correo') }}</label>
+            <div class="kr-input-wrap">
+              <span class="kr-in-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z" fill="none"/><path d="M4 8l8 5 8-5" fill="none"/><path d="M4 6h16v12H4V6zm8 7L4 8m8 5 8-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <input id="kr-email" class="kr-input kr-input-ico" type="text" name="email"
+                     placeholder="{{ tr('auth.email_ph','Ej: correo@dominio.com') }}"
+                     autocomplete="email" required />
+            </div>
+            <div class="kr-error" data-error-for="email"></div>
+          </div>
+
+          <div class="kr-field">
+            <label class="kr-label" for="kr-password">{{ tr('auth.pass_label','Contraseña') }}</label>
+            <div class="kr-input-wrap">
+              <span class="kr-in-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3" fill="none"/><path d="M6.5 11h11v9h-11z" fill="none"/><path d="M7 11V8a5 5 0 0110 0v3M6.5 11h11v9h-11v-9z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <input id="kr-password" class="kr-input kr-input-ico" type="password" name="password"
+                     placeholder="{{ tr('auth.pass_ph','Tu contraseña') }}"
+                     autocomplete="current-password" required />
+            </div>
+            <div class="kr-error" data-error-for="password"></div>
+          </div>
+
+          <div class="kr-field kr-field-confirm" style="display:none;">
+            <label class="kr-label" for="kr-confirm">{{ tr('auth.pass2_label','Confirmar contraseña') }}</label>
+            <div class="kr-input-wrap">
+              <span class="kr-in-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3" fill="none"/><path d="M6.5 11h11v9h-11z" fill="none"/><path d="M7 11V8a5 5 0 0110 0v3M6.5 11h11v9h-11v-9z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <input id="kr-confirm" class="kr-input kr-input-ico" type="password" name="confirm_password"
+                     placeholder="{{ tr('auth.pass2_ph','Repite tu contraseña') }}" />
+            </div>
+            <div class="kr-error" data-error-for="confirm_password"></div>
+          </div>
+
+          <button type="submit" id="kr-enter" class="kr-enter-btn">
+            <span class="kr-enter-text">{{ tr('auth.btn_enter','Entrar') }}</span>
+            <span class="kr-enter-arrow" aria-hidden="true">›</span>
+          </button>
+
+          <div class="kr-mini-actions">
+            <div class="kr-mini-pill-btn">{{ current_lang|upper }} {{ tr('lang.current','Español') }}</div>
+            <button type="button" class="kr-mini-oauth">Continuar con Apple</button>
+            <button type="button" class="kr-mini-oauth">Crear cuenta con Google</button>
+          </div>
+
+          <div class="kr-mini-stats">
+            <span>• {{ tr('auth.stat1','Seguridad') }}</span>
+            <span>• {{ tr('auth.stat2','Status') }}</span>
+            <span>• {{ tr('auth.stat3','Óptimo') }}</span>
+          </div>
+
+          <p class="kr-note">
+            {{ tr('auth.note','Privado: tu sesión es segura y tu actividad puede guardarse como memoria del sistema.') }}
+          </p>
+        </form>
+      </section>
+
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  // ---------- SCALE ----------
+  function applyScale(){
+    const top = 220;
+    const designBlock = 650;
+    const h = window.innerHeight || document.documentElement.clientHeight || 900;
+
+    let s = (h - top) / designBlock;
+    s = Math.max(0.72, Math.min(1, s));
+    document.documentElement.style.setProperty('--kr-auth-scale', s.toFixed(3));
+  }
+  applyScale();
+  window.addEventListener('resize', applyScale, { passive:true });
+
+  // ---------- Tabs ----------
+  const root = document.querySelector('.kr-auth-grid');
+  const tabs = Array.from(document.querySelectorAll('.kr-tab'));
+  const modeInput = document.getElementById('kr-mode');
+  const nameField = document.querySelector('.kr-field-name');
+  const confirmField = document.querySelector('.kr-field-confirm');
+  const btnText = document.querySelector('.kr-enter-text');
+
+  function setMode(mode){
+    tabs.forEach(t=>{
+      const a = (t.dataset.mode === mode);
+      t.classList.toggle('active', a);
+      t.setAttribute('aria-selected', a ? 'true' : 'false');
+    });
+    if(modeInput) modeInput.value = mode;
+
+    const isRegister = (mode === 'register');
+    if(nameField) nameField.style.display = isRegister ? '' : 'none';
+    if(confirmField) confirmField.style.display = isRegister ? '' : 'none';
+    if(btnText) btnText.textContent = isRegister
+      ? (root?.dataset.i18nRegister || 'Crear cuenta')
+      : (root?.dataset.i18nLogin || 'Entrar');
+  }
+  tabs.forEach(t=>t.addEventListener('click', ()=>setMode(t.dataset.mode)));
+  setMode('login');
+
+  // ---------- Slider ----------
+  const slides = Array.from(document.querySelectorAll('.kr-slide'));
+  const dots = Array.from(document.querySelectorAll('.kr-dot'));
+  let idx = 0, timer = null;
+
+  function show(i){
+    if(!slides.length) return;
+    idx = (i + slides.length) % slides.length;
+    slides.forEach((s,k)=>s.classList.toggle('is-active', k===idx));
+    dots.forEach((d,k)=>d.classList.toggle('is-active', k===idx));
+  }
+  function start(){ stop(); timer=setInterval(()=>show(idx+1), 5200); }
+  function stop(){ if(timer) clearInterval(timer); timer=null; }
+
+  dots.forEach(d=>d.addEventListener('click', ()=>{
+    const t = parseInt(d.dataset.target, 10);
+    if(!Number.isNaN(t)) show(t);
+    start();
+  }));
+  show(0); start();
+
+  // ---------- Canvas helpers ----------
+  function fitCanvas(canvas){
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    const ctx = canvas.getContext('2d', { alpha:true });
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx, w: rect.width, h: rect.height};
+  }
+
+  // ---------- Stars (más visibles + estrellas grandes) ----------
+  const starsCanvas = document.getElementById('kr-stars');
+  let starsCtx, sw=0, sh=0, stars=[], bigStars=[];
+  function initStars(){
+    if(!starsCanvas) return;
+    const o = fitCanvas(starsCanvas);
+    starsCtx = o.ctx; sw=o.w; sh=o.h;
+
+    const n = Math.max(240, Math.min(560, Math.floor((sw*sh)/8500)));
+    stars = Array.from({length:n}).map(()=>({
+      x: Math.random()*sw,
+      y: Math.random()*sh,
+      r: Math.random()*1.7 + 0.25,
+      a: Math.random()*0.85 + 0.15,
+      s: Math.random()*0.34 + 0.04,
+      tw: Math.random()*Math.PI*2
+    }));
+
+    const bn = Math.max(12, Math.min(28, Math.floor((sw*sh)/85000)));
+    bigStars = Array.from({length:bn}).map(()=>({
+      x: Math.random()*sw,
+      y: Math.random()*sh*0.78,
+      r: Math.random()*1.9 + 1.2,
+      a: Math.random()*0.56 + 0.24,
+      tw: Math.random()*Math.PI*2
+    }));
+  }
+
+  function drawStars(now){
+    if(!starsCtx) return;
+    starsCtx.clearRect(0,0,sw,sh);
+    const t = now*0.00115;
+
+    // estrellas pequeñas
+    for(const st of stars){
+      st.x += st.s;
+      if(st.x > sw+10) st.x = -10;
+
+      const tw = 0.22*Math.sin(t + st.tw);
+      starsCtx.globalAlpha = Math.max(0.08, st.a + tw);
+
+      starsCtx.beginPath();
+      starsCtx.arc(st.x, st.y, st.r, 0, Math.PI*2);
+      starsCtx.fillStyle = '#ffffff';
+      starsCtx.fill();
+    }
+
+    // estrellas grandes con glow
+    for(const bs of bigStars){
+      const tw = 0.18*Math.sin(t*0.9 + bs.tw);
+      const a = Math.max(0.12, bs.a + tw);
+
+      const g = starsCtx.createRadialGradient(bs.x, bs.y, 0, bs.x, bs.y, bs.r*7.2);
+      g.addColorStop(0, `rgba(255,255,255,${a})`);
+      g.addColorStop(0.35, `rgba(255,230,170,${a*0.46})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+
+      starsCtx.globalAlpha = 1;
+      starsCtx.fillStyle = g;
+      starsCtx.fillRect(bs.x-bs.r*9, bs.y-bs.r*9, bs.r*18, bs.r*18);
+
+      starsCtx.globalAlpha = a;
+      starsCtx.beginPath();
+      starsCtx.arc(bs.x, bs.y, bs.r, 0, Math.PI*2);
+      starsCtx.fillStyle = '#ffffff';
+      starsCtx.fill();
+    }
+  }
+
+  // ---------- Planet (más modelo: más arriba + más grande + red conectada + ripples base) ----------
+  const planetCanvas = document.getElementById('kr-planet');
+  let planetCtx, pw=0, ph=0;
+
+  let planetNodes = [];
+  let planetEdges = [];
+
+  function seededRand(seed){
+    let x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+
+  function buildPlanetNetwork(){
+    planetNodes = [];
+    planetEdges = [];
+
+    const N = Math.max(44, Math.min(90, Math.floor((pw*ph)/24000)));
+
+    for(let i=0;i<N;i++){
+      const a = seededRand(i*12.9898 + 78.233) * Math.PI*2;
+      const r = 0.18 + seededRand(i*93.989 + 12.11) * 0.76;
+      planetNodes.push({
+        a, r,
+        b: 0.35 + seededRand(i*0.77 + 9.1) * 0.65,
+        s: 0.9 + seededRand(i*2.17 + 3.3) * 2.1
+      });
+    }
+
+    const pts = planetNodes.map((n, idx)=>{
+      const x = Math.cos(n.a) * n.r;
+      const y = Math.sin(n.a) * n.r * 0.62;
+      return {idx, x, y};
+    });
+
+    const edgeSet = new Set();
+    for(const p of pts){
+      const neighbors = pts
+        .filter(q=>q.idx !== p.idx)
+        .map(q=>{
+          const dx = q.x - p.x;
+          const dy = q.y - p.y;
+          return {idx:q.idx, d: dx*dx + dy*dy};
+        })
+        .sort((u,v)=>u.d - v.d)
+        .slice(0, 3);
+
+      for(const nb of neighbors){
+        const a = Math.min(p.idx, nb.idx);
+        const b = Math.max(p.idx, nb.idx);
+        const key = a + ':' + b;
+        if(edgeSet.has(key)) continue;
+        edgeSet.add(key);
+        planetEdges.push([a,b, nb.d]);
+      }
+    }
+  }
+
+  function initPlanet(){
+    if(!planetCanvas) return;
+    const o = fitCanvas(planetCanvas);
+    planetCtx = o.ctx; pw=o.w; ph=o.h;
+    buildPlanetNetwork();
+  }
+
+  function drawRipples(cx, cy, baseY, now){
+    const tt = now * 0.001;
+    const y = baseY;
+    const maxW = Math.min(pw, ph) * 0.92;
+
+    planetCtx.save();
+    planetCtx.globalCompositeOperation = 'lighter';
+
+    for(let i=0;i<5;i++){
+      const p = (i/5);
+      const w = maxW * (0.24 + p*0.24) + 12*Math.sin(tt + i);
+      const h = w * 0.14;
+
+      const a = 0.12 * (1 - p);
+      const g = planetCtx.createRadialGradient(cx, y, 0, cx, y, w*0.65);
+      g.addColorStop(0, `rgba(255,210,120,${a*1.8})`);
+      g.addColorStop(0.55, `rgba(124,140,247,${a*0.9})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+
+      planetCtx.globalAlpha = 1;
+      planetCtx.strokeStyle = g;
+      planetCtx.lineWidth = 1;
+
+      planetCtx.beginPath();
+      // elipse manual
+      for(let t=0;t<=Math.PI*2 + 0.001;t+=0.08){
+        const xx = cx + Math.cos(t) * w;
+        const yy = y  + Math.sin(t) * h;
+        if(t===0) planetCtx.moveTo(xx,yy);
+        else planetCtx.lineTo(xx,yy);
+      }
+      planetCtx.closePath();
+      planetCtx.stroke();
+    }
+
+    planetCtx.restore();
+    planetCtx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawPlanet(now){
+    if(!planetCtx) return;
+    planetCtx.clearRect(0,0,pw,ph);
+
+    const t = now * 0.00012;
+
+    const cx = pw * 0.50;
+    const cy = ph * 0.78;
+    const R  = Math.min(pw, ph) * 0.70;
+
+    // halo exterior
+    const outer = planetCtx.createRadialGradient(cx, cy, R*0.35, cx, cy, R*1.22);
+    outer.addColorStop(0.00, 'rgba(255,220,140,0.18)');
+    outer.addColorStop(0.40, 'rgba(124,140,247,0.11)');
+    outer.addColorStop(1.00, 'rgba(0,0,0,0)');
+    planetCtx.fillStyle = outer;
+    planetCtx.fillRect(0,0,pw,ph);
+
+    // amanecer detrás (más fuerte, más modelo)
+    const sx = pw * 0.50;
+    const sy = ph * 0.58;
+    const sun = planetCtx.createRadialGradient(sx, sy, 0, sx, sy, R*0.92);
+    sun.addColorStop(0.00, 'rgba(255,235,175,0.38)');
+    sun.addColorStop(0.10, 'rgba(255,220,140,0.22)');
+    sun.addColorStop(0.26, 'rgba(255,190,90,0.12)');
+    sun.addColorStop(0.52, 'rgba(124,140,247,0.07)');
+    sun.addColorStop(1.00, 'rgba(0,0,0,0)');
+    planetCtx.fillStyle = sun;
+    planetCtx.fillRect(0,0,pw,ph);
+
+    // clip planeta
+    planetCtx.save();
+    planetCtx.beginPath();
+    planetCtx.arc(cx, cy, R, 0, Math.PI*2);
+    planetCtx.clip();
+
+    // base
+    const base = planetCtx.createRadialGradient(cx-R*0.42, cy-R*0.22, R*0.18, cx, cy, R*1.35);
+    base.addColorStop(0.00, 'rgba(40,60,110,0.84)');
+    base.addColorStop(0.55, 'rgba(12,16,34,0.88)');
+    base.addColorStop(1.00, 'rgba(0,0,0,0.97)');
+    planetCtx.fillStyle = base;
+    planetCtx.fillRect(cx-R, cy-R, R*2, R*2);
+
+    // sombra inferior
+    const shade = planetCtx.createRadialGradient(cx, cy+R*0.45, R*0.15, cx, cy+R*0.45, R*1.15);
+    shade.addColorStop(0.00, 'rgba(0,0,0,0.00)');
+    shade.addColorStop(0.55, 'rgba(0,0,0,0.30)');
+    shade.addColorStop(1.00, 'rgba(0,0,0,0.66)');
+    planetCtx.fillStyle = shade;
+    planetCtx.fillRect(cx-R, cy-R, R*2, R*2);
+
+    // grid horizontal
+    planetCtx.lineWidth = 1;
+    for(let i=0;i<40;i++){
+      const yy = cy - R + (i/39)*R*2;
+      const wave = Math.sin(i*0.33 + t*2.0) * (R*0.030);
+
+      planetCtx.beginPath();
+      let started=false;
+      for(let x=cx-R; x<=cx+R; x+=R*0.05){
+        const dx = x-cx;
+        const inside = Math.sqrt(Math.max(0, R*R - dx*dx));
+        const y = yy + wave*(1 - Math.abs(dx)/R);
+        if(Math.abs(y-cy) <= inside){
+          if(!started){ planetCtx.moveTo(x,y); started=true; }
+          else planetCtx.lineTo(x,y);
+        }
+      }
+      planetCtx.globalAlpha = 0.15;
+      planetCtx.strokeStyle = 'rgba(247,227,156,0.95)';
+      planetCtx.stroke();
+    }
+
+    // meridianos
+    for(let i=0;i<18;i++){
+      const ang = (i/18)*Math.PI*2 + t*0.35;
+      planetCtx.beginPath();
+      for(let k=0;k<=60;k++){
+        const v = (k/60)*Math.PI;
+        const rr = R*Math.sin(v);
+        const x = cx + Math.cos(ang)*rr;
+        const y = cy + Math.cos(v)*R*0.92;
+        if(k===0) planetCtx.moveTo(x,y);
+        else planetCtx.lineTo(x,y);
+      }
+      planetCtx.globalAlpha = 0.10;
+      planetCtx.strokeStyle = 'rgba(124,140,247,0.95)';
+      planetCtx.stroke();
+    }
+
+    // red conectada
+    planetCtx.save();
+    planetCtx.globalCompositeOperation = 'lighter';
+
+    const projected = planetNodes.map(n=>{
+      const drift = 0.006*Math.sin(t*30 + n.a*3.0);
+      const rr = R * (n.r + drift);
+      const x = cx + Math.cos(n.a) * rr;
+      const y = cy + Math.sin(n.a) * rr * 0.62;
+      return {x,y,b:n.b,s:n.s};
+    });
+
+    // líneas
+    for(const e of planetEdges){
+      const a = projected[e[0]];
+      const b = projected[e[1]];
+
+      const g = planetCtx.createLinearGradient(a.x,a.y,b.x,b.y);
+      g.addColorStop(0, 'rgba(247,227,156,0.24)');
+      g.addColorStop(1, 'rgba(124,140,247,0.18)');
+
+      planetCtx.globalAlpha = 0.74;
+      planetCtx.strokeStyle = g;
+      planetCtx.lineWidth = 1;
+
+      planetCtx.beginPath();
+      planetCtx.moveTo(a.x,a.y);
+      planetCtx.lineTo(b.x,b.y);
+      planetCtx.stroke();
+    }
+
+    // nodos
+    for(const p of projected){
+      const glow = planetCtx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.s*7.6);
+      glow.addColorStop(0, `rgba(255,255,255,${0.24*p.b})`);
+      glow.addColorStop(0.35, `rgba(247,227,156,${0.20*p.b})`);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+
+      planetCtx.globalAlpha = 1;
+      planetCtx.fillStyle = glow;
+      planetCtx.fillRect(p.x-p.s*10, p.y-p.s*10, p.s*20, p.s*20);
+
+      planetCtx.globalAlpha = 0.92;
+      planetCtx.beginPath();
+      planetCtx.arc(p.x,p.y, 1.0 + (p.s*0.40), 0, Math.PI*2);
+      planetCtx.fillStyle = 'rgba(255,255,255,0.96)';
+      planetCtx.fill();
+    }
+
+    planetCtx.restore();
+    planetCtx.globalCompositeOperation = 'source-over';
+
+    // horizonte
+    planetCtx.globalAlpha = 0.76;
+    const hz = planetCtx.createLinearGradient(0, cy-R*0.28, 0, cy+R*0.38);
+    hz.addColorStop(0.00, 'rgba(255,255,255,0)');
+    hz.addColorStop(0.50, 'rgba(247,227,156,0.36)');
+    hz.addColorStop(1.00, 'rgba(0,0,0,0)');
+    planetCtx.fillStyle = hz;
+    planetCtx.fillRect(cx-R, cy-R, R*2, R*2);
+
+    planetCtx.restore(); // fin clip
+
+    // atmósfera exterior
+    planetCtx.save();
+    planetCtx.globalCompositeOperation = 'lighter';
+
+    const atmo = planetCtx.createRadialGradient(cx, cy, R*0.86, cx, cy, R*1.08);
+    atmo.addColorStop(0.00, 'rgba(255,210,120,0)');
+    atmo.addColorStop(0.52, 'rgba(255,210,120,0.12)');
+    atmo.addColorStop(0.80, 'rgba(124,140,247,0.12)');
+    atmo.addColorStop(1.00, 'rgba(0,0,0,0)');
+
+    planetCtx.fillStyle = atmo;
+    planetCtx.beginPath();
+    planetCtx.arc(cx, cy, R*1.03, 0, Math.PI*2);
+    planetCtx.fill();
+
+    planetCtx.restore();
+    planetCtx.globalCompositeOperation = 'source-over';
+
+    // ripples base tipo modelo
+    drawRipples(cx, cy, ph*0.93, now);
+  }
+
+  function resizeAll(){
+    if(starsCanvas) initStars();
+    if(planetCanvas) initPlanet();
+  }
+
+  function loop(now){
+    drawStars(now);
+    drawPlanet(now);
+    requestAnimationFrame(loop);
+  }
+
+  resizeAll();
+  window.addEventListener('resize', resizeAll, {passive:true});
+  requestAnimationFrame(loop);
+
+  // ---------- METEOR (evento aleatorio premium) ----------
+  const meteor = document.querySelector('.kr-meteor');
+
+  function scheduleMeteor(){
+    if(!meteor) return;
+
+    const wait = 12000 + Math.random() * 14000;
+
+    setTimeout(()=>{
+      const y = Math.round((-40 + Math.random()*160));
+      const rot = (-18 - Math.random()*18).toFixed(1);
+      const dur = (6.2 + Math.random()*3.4).toFixed(2);
+
+      meteor.style.setProperty('--kr-meteor-y', `${y}px`);
+      meteor.style.setProperty('--kr-meteor-rot', `${rot}deg`);
+      meteor.style.setProperty('--kr-meteor-dur', `${dur}s`);
+
+      meteor.classList.remove('is-fly');
+      void meteor.offsetWidth;
+      meteor.classList.add('is-fly');
+
+      const onEnd = ()=>{
+        meteor.classList.remove('is-fly');
+        meteor.removeEventListener('animationend', onEnd);
+        scheduleMeteor();
+      };
+      meteor.addEventListener('animationend', onEnd);
+
+    }, wait);
+  }
+  scheduleMeteor();
+
+})();
+</script>
+{% endblock %}

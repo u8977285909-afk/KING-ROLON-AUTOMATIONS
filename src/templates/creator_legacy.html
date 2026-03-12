@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('creator.title') }} | {{ t('app.name') }}{% endblock %}
+{% block page_title %}{{ t('creator.title') }}{% endblock %}
+{% block page_subtitle %}{{ t('creator.subtitle') }}{% endblock %}
+
+{% block content %}
+
+{# =========================
+   DATOS SEGUROS
+========================= #}
+{% set u = current_user or {} %}
+{% set name = u.name or u.email or "Creador KR" %}
+{% set role = u.role or "FREE" %}
+{% set apps = my_apps or [] %}
+
+{# =========================
+   HERO CREADOR
+========================= #}
+<section class="kr-card kr-mt-lg">
+  <div class="kr-settings-header-row">
+    <div>
+      <h2 class="kr-card-title">👑 {{ name }}</h2>
+      <p class="kr-card-label">
+        {{ t('creator.subtitle') }}
+      </p>
+    </div>
+    <span class="kr-tag kr-tag-ok">{{ role|upper }}</span>
+  </div>
+
+  <div class="kr-grid kr-grid-3 kr-mt-md">
+    <div>
+      <div class="kr-card-number">{{ apps|length }}</div>
+      <div class="kr-text-muted">Apps creadas</div>
+    </div>
+    <div>
+      <div class="kr-card-number">€ 0.00</div>
+      <div class="kr-text-muted">Ganancia (MVP)</div>
+    </div>
+    <div>
+      <div class="kr-card-number">0</div>
+      <div class="kr-text-muted">Ventas</div>
+    </div>
+  </div>
+</section>
+
+{# =========================
+   LISTA DE APPS DEL CREADOR
+========================= #}
+<section class="kr-card kr-mt-lg">
+  <div class="kr-settings-header-row">
+    <div>
+      <h2 class="kr-card-title">{{ t('market.my_apps') }}</h2>
+      <p class="kr-card-label">
+        Apps creadas por ti dentro del Reino.
+      </p>
+    </div>
+    <a href="{{ url_for('marketplace') }}" class="kr-btn kr-btn-xs kr-btn-gold">
+      {{ t('creator.create') }}
+    </a>
+  </div>
+
+  {% if apps %}
+    <ul class="kr-list kr-mt-lg">
+      {% for app in apps %}
+        <li style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;">
+          <div>
+            <div style="font-weight:900;">
+              {{ app.title or "App sin título" }}
+            </div>
+            <div class="kr-text-muted" style="font-size:11px;">
+              {{ app.platform or "—" }} · € {{ ((app.price_cents or 0) / 100)|round(2) }}
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;">
+            {% if app.status == "published" %}
+              <span class="kr-tag kr-tag-ok">{{ t('market.status_published') }}</span>
+            {% else %}
+              <span class="kr-tag kr-tag-pending">{{ t('market.status_draft') }}</span>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="kr-text-muted kr-mt-lg">
+      {{ t('creator.empty') }}
+    </p>
+  {% endif %}
+</section>
+
+{# =========================
+   BLOQUE FUTURO (DESACTIVADO)
+========================= #}
+<section class="kr-card kr-mt-lg" style="opacity:.55;">
+  <h2 class="kr-card-title">📈 Métricas avanzadas</h2>
+  <p class="kr-text-muted">
+    Ventas, comisiones, ranking y análisis por app se activarán cuando el Marketplace
+    entre en modo comercial completo.
+  </p>
+</section>
+
+{% endblock %}

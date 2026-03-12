@@ -1,0 +1,689 @@
+{# templates/tasks.html — KING ROLON AUTOMATIONS (GOD MODE ✅)
+   ✅ Compatible con base.html real (blocks: title, head, content, scripts)
+   ✅ CRUD real: /api/tasks (POST), /api/tasks/<id> (PUT, DELETE), /api/tasks/<id>/toggle (POST)
+   ✅ i18n safe + dict-safe + no blank
+#}
+{% extends "base.html" %}
+
+{# =========================
+   i18n FALLBACK (si falta key en I18N)
+   ========================= #}
+{% macro tr(key, fallback) -%}
+  {%- set v = t(key) -%}
+  {{ v if v != key else fallback }}
+{%- endmacro %}
+
+{% block title %}{{ tr('tasks.title_tab', 'Automatizaciones') }} | {{ t('app.name') }}{% endblock %}
+
+{% block content %}
+
+{# =========================
+   SAFE DEFAULTS (NO BLANK)
+   ========================= #}
+{% set tareas = tareas or [] %}
+{% set tareas_activas = tareas_activas or [] %}
+{% set plataformas_unicas = plataformas_unicas or [] %}
+
+{# Fallback profesional: generar plataformas si backend no las envía #}
+{% if plataformas_unicas|length == 0 and tareas|length > 0 %}
+  {% set ns_pl = namespace(items=[]) %}
+  {% for tsk in tareas %}
+    {% if tsk is mapping %}
+      {% set p = (tsk.get('plataforma') or tr('tasks.unspecified','Sin especificar')) %}
+      {% if p and p not in ns_pl.items %}
+        {% set ns_pl.items = ns_pl.items + [p] %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+  {% set plataformas_unicas = ns_pl.items %}
+{% endif %}
+
+{# =========================
+   PAGE HEADER (compatible con tu CSS: kr-page-head)
+   ========================= #}
+<section class="kr-page-head">
+  <h1 class="kr-page-title">{{ tr('tasks.title','Automatizaciones') }}</h1>
+  <p class="kr-page-subtitle">{{ tr('tasks.subtitle','Crea, edita, pausa y administra tus tareas.') }}</p>
+</section>
+
+<div class="kr-grid kr-grid-2 kr-mt-lg">
+
+  <!-- =========================
+       RESUMEN GENERAL
+  ========================= -->
+  <section class="kr-card">
+    <div class="kr-settings-header-row">
+      <div>
+        <h2 class="kr-card-title">{{ tr('tasks.quick_summary','Resumen rápido') }}</h2>
+        <p class="kr-card-label">{{ tr('tasks.subtitle','Crea, edita, pausa y administra tus tareas.') }}</p>
+      </div>
+      <span class="kr-tag" id="kr-total-count">{{ tareas|length }}</span>
+    </div>
+
+    <dl class="kr-settings-list" style="margin-top:12px;">
+      <dt>{{ tr('tasks.total_tasks','Total') }}</dt>
+      <dd style="font-weight:900;">{{ tareas|length }}</dd>
+
+      <dt>{{ tr('tasks.active_tasks','Activas') }}</dt>
+      <dd style="font-weight:900;">{{ tareas_activas|length }}</dd>
+
+      <dt>{{ tr('tasks.platforms_configured','Plataformas') }}</dt>
+      <dd style="font-weight:900;">{{ plataformas_unicas|length }}</dd>
+    </dl>
+
+    {% if plataformas_unicas %}
+      <div class="kr-mt-md">
+        <div class="kr-label" style="margin-bottom:8px;">{{ tr('tasks.by_platform','Por plataforma') }}</div>
+        <ul class="kr-list" style="font-size:12px;">
+          {% for pl in plataformas_unicas %}
+            {% set ns = namespace(count=0) %}
+            {% for tsk in tareas %}
+              {% if tsk is mapping %}
+                {% if (tsk.get('plataforma') or tr('tasks.unspecified','Sin especificar')) == pl %}
+                  {% set ns.count = ns.count + 1 %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            <li style="display:flex;justify-content:space-between;align-items:center;">
+              <span>{{ pl }}</span>
+              <span class="kr-tag kr-tag-pending">
+                {{ tr('tasks.count_tasks','{n} tareas')|replace('{n}', (ns.count|string)) }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div class="kr-mt-lg">
+      <button id="kr-open-create-task"
+              class="kr-btn kr-btn-gold kr-btn-lg kr-breathe"
+              type="button">
+        {{ tr('tasks.new_task_btn','Nueva tarea') }}
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================
+       FILTROS (FRONT ONLY)
+  ========================= -->
+  <section class="kr-card">
+    <div class="kr-settings-header-row">
+      <div>
+        <h2 class="kr-card-title">{{ tr('tasks.filters','Filtros') }}</h2>
+        <p class="kr-card-label">{{ tr('tasks.filters_sub','Filtra por nombre, plataforma y estado.') }}</p>
+      </div>
+      <button id="kr-clear-filters" class="kr-btn kr-btn-outline kr-btn-xs" type="button">
+        {{ tr('tasks.clear_filters','Limpiar') }}
+      </button>
+    </div>
+
+    <div class="kr-field kr-mt-md">
+      <label class="kr-label" for="kr-filter-nombre">{{ tr('tasks.search_name','Buscar por nombre') }}</label>
+      <input id="kr-filter-nombre" class="kr-input"
+             placeholder="{{ tr('tasks.search_ph','Ej: Publicar clips...') }}">
+    </div>
+
+    <div class="kr-field">
+      <label class="kr-label" for="kr-filter-plataforma">{{ tr('tasks.platform','Plataforma') }}</label>
+      <select id="kr-filter-plataforma" class="kr-input">
+        <option value="">{{ tr('tasks.all','Todas') }}</option>
+        {% for pl in plataformas_unicas %}
+          <option value="{{ pl|e }}">{{ pl }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="kr-field">
+      <label class="kr-label" for="kr-filter-estado">{{ tr('tasks.status','Estado') }}</label>
+      <select id="kr-filter-estado" class="kr-input">
+        <option value="">{{ tr('tasks.all','Todos') }}</option>
+        <option value="activa">{{ tr('tasks.status_active','Activa') }}</option>
+        <option value="pausada">{{ tr('tasks.status_paused','Pausada') }}</option>
+      </select>
+    </div>
+
+    <p class="kr-text-muted" style="font-size:11px; margin-top:8px;">
+      {{ tr('tasks.filters_note','Los filtros se aplican sin recargar la página.') }}
+    </p>
+  </section>
+
+</div>
+
+<!-- =========================
+     LISTA DE TAREAS
+========================= -->
+<section class="kr-card kr-mt-lg">
+  <div class="kr-settings-header-row">
+    <div>
+      <h2 class="kr-card-title">{{ tr('tasks.list_title','Lista de tareas') }}</h2>
+      <p class="kr-card-label">{{ tr('tasks.subtitle','Crea, edita, pausa y administra tus tareas.') }}</p>
+    </div>
+    <span id="kr-visible-count" class="kr-tag">{{ tareas|length }}</span>
+  </div>
+
+  <div id="kr-task-area">
+    {% if tareas %}
+      <ul id="kr-task-list" class="kr-list kr-mt-lg">
+        {% for tsk in tareas %}
+          {% if tsk is mapping %}
+            {% set activa = true if tsk.get('activa') else false %}
+            {% set nombre = (tsk.get('nombre') or '') %}
+            {% set plataforma = (tsk.get('plataforma') or tr('tasks.unspecified','Sin especificar')) %}
+            {% set frecuencia = (tsk.get('frecuencia') or '') %}
+
+            <li class="kr-task-row"
+                data-task-id="{{ (tsk.get('id','') ~ '')|e }}"
+                data-task-nombre="{{ nombre|e }}"
+                data-task-plataforma="{{ plataforma|e }}"
+                data-task-frecuencia="{{ frecuencia|e }}"
+                data-task-activa="{{ '1' if activa else '0' }}">
+
+              <div style="min-width:0;">
+                <div class="kr-card-title" style="font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  {{ nombre if nombre else "—" }}
+                </div>
+                <div class="kr-text-muted" style="font-size:12px;">
+                  {{ plataforma }} · {{ frecuencia if frecuencia else tr('tasks.no_frequency','Sin frecuencia') }}
+                </div>
+              </div>
+
+              <div class="kr-task-actions" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+                {% if activa %}
+                  <span class="kr-tag kr-tag-ok">{{ tr('tasks.status_active','Activa') }}</span>
+                {% else %}
+                  <span class="kr-tag kr-tag-off">{{ tr('tasks.status_paused','Pausada') }}</span>
+                {% endif %}
+
+                <button class="kr-btn kr-btn-xs kr-task-toggle" type="button" data-action="toggle">
+                  {{ tr('tasks.pause','Pausar') if activa else tr('tasks.activate','Activar') }}
+                </button>
+
+                <button class="kr-btn kr-btn-xs kr-btn-outline kr-task-edit" type="button" data-action="edit">
+                  {{ tr('tasks.edit','Editar') }}
+                </button>
+
+                <button class="kr-btn kr-btn-xs kr-btn-outline kr-task-delete" type="button" data-action="delete">
+                  {{ tr('tasks.delete','Eliminar') }}
+                </button>
+              </div>
+
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    {% else %}
+      <div id="kr-empty-state" class="kr-empty kr-mt-lg">
+        {{ tr('tasks.empty_state','Aún no hay tareas. Crea la primera y empieza a automatizar el Reino.') }}
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- =========================
+     MODAL CREAR / EDITAR
+========================= -->
+<div id="kr-modal-overlay" class="kr-modal-overlay" style="display:none;" aria-hidden="true">
+  <div class="kr-modal" role="dialog" aria-modal="true" aria-labelledby="kr-modal-title" style="max-width:560px; margin:0 auto;">
+    <div class="kr-settings-header-row" style="margin-bottom:12px;">
+      <div class="kr-card-title" id="kr-modal-title">{{ tr('tasks.modal_new_title','Nueva tarea') }}</div>
+      <button type="button" id="kr-modal-x" class="kr-btn kr-btn-xs kr-btn-outline">✕</button>
+    </div>
+
+    <form id="kr-task-form" autocomplete="off">
+      {# ✅ FIX: evitar ID duplicado con data-task-id #}
+      <input type="hidden" id="kr-task-id-input">
+
+      <div class="kr-field">
+        <label class="kr-label" for="kr-input-nombre">{{ tr('tasks.modal_name_label','Nombre') }}</label>
+        <input id="kr-input-nombre" class="kr-input" maxlength="80"
+               placeholder="{{ tr('tasks.modal_name_ph','Ej: Publicar 3 clips por día') }}" required>
+        <div id="kr-error-nombre" class="kr-field-error"></div>
+      </div>
+
+      <div class="kr-field">
+        <label class="kr-label" for="kr-input-plataforma">{{ tr('tasks.modal_platform_label','Plataforma') }}</label>
+        <select id="kr-input-plataforma" class="kr-input">
+          <option value="">{{ tr('tasks.unspecified','Sin especificar') }}</option>
+          <option>TikTok</option>
+          <option>Instagram</option>
+          <option>YouTube</option>
+          <option>Facebook</option>
+          <option>Twitch</option>
+          <option>Twitter/X</option>
+          <option>General</option>
+        </select>
+      </div>
+
+      <div class="kr-field">
+        <label class="kr-label" for="kr-input-frecuencia">{{ tr('tasks.modal_frequency_label','Frecuencia') }}</label>
+        <input id="kr-input-frecuencia" class="kr-input"
+               placeholder="{{ tr('tasks.modal_frequency_ph','Ej: cada 2h / diario / lunes 08:00') }}">
+      </div>
+
+      <div class="kr-modal-actions" style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
+        <button type="button" id="kr-modal-cancel" class="kr-btn kr-btn-outline">
+          {{ tr('common.cancel','Cancelar') }}
+        </button>
+        <button type="submit" id="kr-modal-save" class="kr-btn kr-btn-gold">
+          {{ tr('common.save','Guardar') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function () {
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  function $(sel, root){ return (root || document).querySelector(sel); }
+  function $all(sel, root){ return Array.from((root || document).querySelectorAll(sel)); }
+
+  // ✅ FIX PRO: tolera respuestas NO-JSON (HTML/empty) sin romper
+  async function jsonFetch(url, opts){
+    const res = await fetch(url, Object.assign({
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin"
+    }, opts || {}));
+
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+    let data = null;
+
+    if (ct.includes("application/json")) {
+      data = await res.json().catch(() => null);
+    } else {
+      const txt = await res.text().catch(() => "");
+      data = txt ? { message: txt } : {};
+    }
+
+    if (!res.ok || (data && data.ok === false)) {
+      const msg = (data && (data.error || data.message)) || ("HTTP " + res.status);
+      throw new Error(msg);
+    }
+    return data || {};
+  }
+
+  // -----------------------------
+  // Elements
+  // -----------------------------
+  const taskArea = $("#kr-task-area");
+  let list = $("#kr-task-list");
+
+  const overlay = $("#kr-modal-overlay");
+  const modalTitle = $("#kr-modal-title");
+  const taskForm = $("#kr-task-form");
+
+  const taskIdInput = $("#kr-task-id-input"); // ✅ FIX
+  const nameInput = $("#kr-input-nombre");
+  const platformInput = $("#kr-input-plataforma");
+  const freqInput = $("#kr-input-frecuencia");
+  const errName = $("#kr-error-nombre");
+
+  const openCreate = $("#kr-open-create-task");
+  const cancelBtn = $("#kr-modal-cancel");
+  const xBtn = $("#kr-modal-x");
+
+  const filterName = $("#kr-filter-nombre");
+  const filterPlatform = $("#kr-filter-plataforma");
+  const filterStatus = $("#kr-filter-estado");
+  const clearFilters = $("#kr-clear-filters");
+
+  const visibleCount = $("#kr-visible-count");
+  const totalCount = $("#kr-total-count");
+
+  let modalMode = "create";
+
+  function ensureListExists(){
+    list = $("#kr-task-list");
+    if (list) return list;
+
+    const empty = $("#kr-empty-state");
+    if (empty) empty.remove();
+
+    const ul = document.createElement("ul");
+    ul.id = "kr-task-list";
+    ul.className = "kr-list kr-mt-lg";
+    taskArea.appendChild(ul);
+    list = ul;
+    return list;
+  }
+
+  function showOverlay(show){
+    if (!overlay) return;
+    overlay.style.display = show ? "flex" : "none";
+    overlay.setAttribute("aria-hidden", show ? "false" : "true");
+    if (show) setTimeout(() => nameInput && nameInput.focus(), 30);
+  }
+
+  function closeModal(){ showOverlay(false); }
+
+  function setModalMode(mode, row){
+    modalMode = mode; // "create" | "edit"
+    if (errName) errName.textContent = "";
+    if (nameInput) nameInput.classList.remove("kr-input-error");
+
+    if (mode === "edit" && row) {
+      if (modalTitle) modalTitle.textContent = "{{ tr('tasks.modal_edit_title','Editar tarea') }}";
+      if (taskIdInput) taskIdInput.value = row.dataset.taskId || "";
+      if (nameInput) nameInput.value = row.dataset.taskNombre || "";
+      if (platformInput) platformInput.value = row.dataset.taskPlataforma || "";
+      if (freqInput) freqInput.value = row.dataset.taskFrecuencia || "";
+    } else {
+      if (modalTitle) modalTitle.textContent = "{{ tr('tasks.modal_new_title','Nueva tarea') }}";
+      if (taskIdInput) taskIdInput.value = "";
+      if (nameInput) nameInput.value = "";
+      if (platformInput) platformInput.value = "";
+      if (freqInput) freqInput.value = "";
+    }
+  }
+
+  function updateCounts(){
+    const allRows = $all(".kr-task-row");
+    const total = allRows.length;
+    const visible = allRows.filter(li => li.style.display !== "none").length;
+
+    if (totalCount) totalCount.textContent = String(total);
+    if (visibleCount) visibleCount.textContent = String(visible);
+  }
+
+  function applyFilters(){
+    const q = ((filterName && filterName.value) || "").trim().toLowerCase();
+    const plat = ((filterPlatform && filterPlatform.value) || "").trim().toLowerCase();
+    const st = ((filterStatus && filterStatus.value) || "").trim().toLowerCase(); // activa/pausada
+
+    $all(".kr-task-row").forEach(li => {
+      const nombre = (li.dataset.taskNombre || "").toLowerCase();
+      const plataforma = (li.dataset.taskPlataforma || "").toLowerCase();
+      const activa = (li.dataset.taskActiva || "0") === "1";
+
+      let ok = true;
+      if (q && !nombre.includes(q)) ok = false;
+      if (plat && plataforma !== plat) ok = false;
+      if (st === "activa" && !activa) ok = false;
+      if (st === "pausada" && activa) ok = false;
+
+      li.style.display = ok ? "" : "none";
+    });
+
+    updateCounts();
+  }
+
+  function setRowData(li, task){
+    li.dataset.taskId = task.id || "";
+    li.dataset.taskNombre = task.nombre || "";
+    li.dataset.taskPlataforma = task.plataforma || "";
+    li.dataset.taskFrecuencia = task.frecuencia || "";
+    li.dataset.taskActiva = task.activa ? "1" : "0";
+  }
+
+  function renderRow(task){
+    const li = document.createElement("li");
+    li.className = "kr-task-row";
+    setRowData(li, task);
+
+    const left = document.createElement("div");
+    left.style.minWidth = "0";
+
+    const title = document.createElement("div");
+    title.className = "kr-card-title";
+    title.style.fontSize = "13px";
+    title.style.whiteSpace = "nowrap";
+    title.style.overflow = "hidden";
+    title.style.textOverflow = "ellipsis";
+    title.textContent = task.nombre || "—";
+
+    const meta = document.createElement("div");
+    meta.className = "kr-text-muted";
+    meta.style.fontSize = "12px";
+    meta.textContent =
+      (task.plataforma || "{{ tr('tasks.unspecified','Sin especificar') }}") +
+      " · " +
+      (task.frecuencia || "{{ tr('tasks.no_frequency','Sin frecuencia') }}");
+
+    left.appendChild(title);
+    left.appendChild(meta);
+
+    const actions = document.createElement("div");
+    actions.className = "kr-task-actions";
+    actions.style.display = "flex";
+    actions.style.gap = "8px";
+    actions.style.alignItems = "center";
+    actions.style.flexWrap = "wrap";
+    actions.style.justifyContent = "flex-end";
+
+    const badge = document.createElement("span");
+    badge.className = "kr-tag " + (task.activa ? "kr-tag-ok" : "kr-tag-off");
+    badge.textContent = task.activa ? "{{ tr('tasks.status_active','Activa') }}" : "{{ tr('tasks.status_paused','Pausada') }}";
+
+    const btnToggle = document.createElement("button");
+    btnToggle.type = "button";
+    btnToggle.className = "kr-btn kr-btn-xs kr-task-toggle";
+    btnToggle.dataset.action = "toggle";
+    btnToggle.textContent = task.activa ? "{{ tr('tasks.pause','Pausar') }}" : "{{ tr('tasks.activate','Activar') }}";
+
+    const btnEdit = document.createElement("button");
+    btnEdit.type = "button";
+    btnEdit.className = "kr-btn kr-btn-xs kr-btn-outline kr-task-edit";
+    btnEdit.dataset.action = "edit";
+    btnEdit.textContent = "{{ tr('tasks.edit','Editar') }}";
+
+    const btnDel = document.createElement("button");
+    btnDel.type = "button";
+    btnDel.className = "kr-btn kr-btn-xs kr-btn-outline kr-task-delete";
+    btnDel.dataset.action = "delete";
+    btnDel.textContent = "{{ tr('tasks.delete','Eliminar') }}";
+
+    actions.appendChild(badge);
+    actions.appendChild(btnToggle);
+    actions.appendChild(btnEdit);
+    actions.appendChild(btnDel);
+
+    li.appendChild(left);
+    li.appendChild(actions);
+
+    return li;
+  }
+
+  // -----------------------------
+  // Modal events
+  // -----------------------------
+  if (openCreate) {
+    openCreate.addEventListener("click", () => {
+      setModalMode("create");
+      showOverlay(true);
+    });
+  }
+
+  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+  if (xBtn) xBtn.addEventListener("click", closeModal);
+
+  if (overlay) {
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeModal();
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && overlay && overlay.style.display !== "none") closeModal();
+  });
+
+  // -----------------------------
+  // Filters
+  // -----------------------------
+  if (filterName) filterName.addEventListener("input", applyFilters);
+  if (filterPlatform) filterPlatform.addEventListener("change", applyFilters);
+  if (filterStatus) filterStatus.addEventListener("change", applyFilters);
+
+  if (clearFilters) {
+    clearFilters.addEventListener("click", () => {
+      if (filterName) filterName.value = "";
+      if (filterPlatform) filterPlatform.value = "";
+      if (filterStatus) filterStatus.value = "";
+      applyFilters();
+    });
+  }
+
+  // -----------------------------
+  // Row actions (delegation)
+  // -----------------------------
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+
+    const li = btn.closest(".kr-task-row");
+    if (!li) return;
+
+    const id = li.dataset.taskId || "";
+    const action = btn.dataset.action || "";
+
+    if (!id && action !== "edit") return;
+
+    // EDIT
+    if (action === "edit") {
+      setModalMode("edit", li);
+      showOverlay(true);
+      return;
+    }
+
+    // TOGGLE
+    if (action === "toggle") {
+      btn.disabled = true;
+      try {
+        // ✅ FIX: no body needed
+        await jsonFetch(`/api/tasks/${encodeURIComponent(id)}/toggle`, { method: "POST" });
+        const wasActive = (li.dataset.taskActiva || "0") === "1";
+        li.dataset.taskActiva = wasActive ? "0" : "1";
+
+        const badge = li.querySelector(".kr-tag");
+        if (badge) {
+          badge.classList.toggle("kr-tag-ok", !wasActive);
+          badge.classList.toggle("kr-tag-off", wasActive);
+          badge.textContent = !wasActive ? "{{ tr('tasks.status_active','Activa') }}" : "{{ tr('tasks.status_paused','Pausada') }}";
+        }
+        btn.textContent = !wasActive ? "{{ tr('tasks.pause','Pausar') }}" : "{{ tr('tasks.activate','Activar') }}";
+        applyFilters();
+      } catch (err) {
+        alert(String(err.message || err));
+      } finally {
+        btn.disabled = false;
+      }
+      return;
+    }
+
+    // DELETE
+    if (action === "delete") {
+      const ok = confirm("{{ tr('tasks.confirm_delete','¿Eliminar esta tarea?') }}");
+      if (!ok) return;
+
+      btn.disabled = true;
+      try {
+        await jsonFetch(`/api/tasks/${encodeURIComponent(id)}`, { method: "DELETE" });
+        li.remove();
+        applyFilters();
+      } catch (err) {
+        alert(String(err.message || err));
+      } finally {
+        btn.disabled = false;
+      }
+      return;
+    }
+  });
+
+  // -----------------------------
+  // Submit (create/edit)
+  // -----------------------------
+  if (taskForm) {
+    taskForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (errName) errName.textContent = "";
+      if (nameInput) nameInput.classList.remove("kr-input-error");
+
+      const nombre = (nameInput && nameInput.value || "").trim();
+      const plataforma = (platformInput && platformInput.value || "").trim() || "{{ tr('tasks.unspecified','Sin especificar') }}";
+      const frecuencia = (freqInput && freqInput.value || "").trim();
+
+      if (!nombre || nombre.length < 2) {
+        if (errName) errName.textContent = "{{ tr('tasks.err_name','Nombre requerido.') }}";
+        if (nameInput) {
+          nameInput.classList.add("kr-input-error");
+          nameInput.focus();
+        }
+        return;
+      }
+
+      const payload = JSON.stringify({ nombre, plataforma, frecuencia });
+
+      const isEdit = modalMode === "edit" && (taskIdInput && taskIdInput.value || "").trim().length > 0;
+
+      const saveBtn = $("#kr-modal-save");
+      if (saveBtn) saveBtn.disabled = true;
+
+      try {
+        if (!isEdit) {
+          const data = await jsonFetch("/api/tasks", { method: "POST", body: payload });
+          const task = (data.task || {});
+          const ul = ensureListExists();
+          ul.prepend(renderRow(task));
+          applyFilters();
+        } else {
+          const id = (taskIdInput.value || "").trim();
+          await jsonFetch(`/api/tasks/${encodeURIComponent(id)}`, { method: "PUT", body: payload });
+
+          const li = $all(".kr-task-row").find(x => (x.dataset.taskId || "") === id);
+          if (li) {
+            li.dataset.taskNombre = nombre;
+            li.dataset.taskPlataforma = plataforma;
+            li.dataset.taskFrecuencia = frecuencia;
+
+            const title = li.querySelector(".kr-card-title");
+            const meta = li.querySelector(".kr-text-muted");
+            if (title) title.textContent = nombre;
+            if (meta) meta.textContent = plataforma + " · " + (frecuencia || "{{ tr('tasks.no_frequency','Sin frecuencia') }}");
+          }
+          applyFilters();
+        }
+
+        closeModal();
+      } catch (err) {
+        alert(String(err.message || err));
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+      }
+    });
+  }
+
+  // -----------------------------
+  // Minimal modal styles if CSS missing (safe)
+  // -----------------------------
+  if (overlay) {
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.background = "rgba(0,0,0,.55)";
+    overlay.style.backdropFilter = "blur(8px)";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.padding = "18px";
+
+    const modal = overlay.querySelector(".kr-modal");
+    if (modal) {
+      modal.style.width = "100%";
+      modal.style.borderRadius = "18px";
+      modal.style.padding = "18px";
+      modal.style.border = "1px solid rgba(255,255,255,.10)";
+      modal.style.background = "rgba(11,12,18,.96)";
+      modal.style.boxShadow = "0 18px 50px rgba(0,0,0,.55)";
+    }
+  }
+
+  // Init
+  applyFilters();
+})();
+</script>
+{% endblock %}

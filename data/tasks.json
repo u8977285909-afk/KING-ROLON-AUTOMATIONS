@@ -1,25 +1,18 @@
 [
   {
-    "id": "T20251112054733350592",
+    "id": "8002e29d-3b85-41d4-8374-a9f44b443649",
     "nombre": "Subir clip diario a TikTok",
     "plataforma": "TikTok",
     "frecuencia": "Cada 24h",
-    "activa": true,
-    "creada_en": "2025-11-12 05:47:33"
+    "activa": false,
+    "creada_en": "2025-12-07 07:14:16"
   },
   {
-    "id": "T20251112055221567367",
-    "nombre": "Subir clip diario a TikTok",
-    "plataforma": "TikTok",
-    "frecuencia": "Cada 24h",
+    "id": "acbfab3c-043d-45fb-8a4f-d766779358c5",
+    "nombre": "Repost en Facebook Gaming",
+    "plataforma": "Facebook",
+    "frecuencia": "Después de cada stream",
     "activa": true,
-    "creada_en": "2025-11-12 05:52:21"
-  },
-  {
-    "id": "54516e5d-c0ed-4bad-810f-295db84530fb",
-    "nombre": "Subir clip motivacional",
-    "plataforma": "TikTok",
-    "frecuencia": "Cada día",
-    "activa": true
+    "creada_en": "2025-12-07 07:14:16"
   }
 ]

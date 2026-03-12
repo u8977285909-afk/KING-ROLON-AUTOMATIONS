@@ -1,0 +1,78 @@
+/* =========================================================
+   KR PATCH (SAFE) — solo arregla layout 100% zoom
+   No toca AUTH. No rompe módulos.
+   ========================================================= */
+
+/* evita overflow lateral por grids/cards */
+html, body { max-width:100%; overflow-x:hidden; }
+
+/* NO afectar auth */
+.kr-page-auth .kr-shell,
+.kr-page-auth .kr-sidebar,
+.kr-page-auth .kr-topbar2 { display:none !important; }
+.kr-page-auth .kr-main,
+.kr-page-auth .kr-content { margin-left:0 !important; padding-left:0 !important; }
+
+/* app shell estable */
+.kr-shell{
+  display:flex !important;
+  width:100% !important;
+  min-height:100vh !important;
+}
+
+/* sidebar ancho fijo, main no se monta */
+.kr-sidebar{
+  width:280px !important;
+  flex:0 0 280px !important;
+}
+
+.kr-main{
+  flex:1 !important;
+  min-width:0 !important;   /* CLAVE anti-amontonamiento */
+  width:100% !important;
+}
+
+/* topbar no empuja */
+.kr-topbar2{
+  width:100% !important;
+  min-width:0 !important;
+}
+
+/* content con padding estable */
+.kr-content{
+  min-width:0 !important;
+  width:100% !important;
+  padding:18px 16px 26px !important;
+}
+
+/* grids con minmax(0,1fr) para que no revienten */
+.kr-grid-4{
+  grid-template-columns:repeat(4, minmax(0, 1fr)) !important;
+}
+.kr-grid-3{
+  grid-template-columns:repeat(3, minmax(0, 1fr)) !important;
+}
+
+/* responsive */
+@media (max-width:1180px){
+  .kr-grid-4{ grid-template-columns:repeat(2, minmax(0,1fr)) !important; }
+  .kr-grid-3{ grid-template-columns:repeat(2, minmax(0,1fr)) !important; }
+}
+
+@media (max-width:860px){
+  .kr-shell{ display:block !important; }
+
+  .kr-sidebar{
+    position:fixed !important;
+    left:0; top:0;
+    height:100vh;
+    width:290px !important;
+    transform:translateX(-105%);
+    transition:transform .18s ease;
+    z-index:35;
+  }
+  .kr-sidebar.is-open{ transform:translateX(0); }
+
+  .kr-main{ margin-left:0 !important; }
+  .kr-grid-4, .kr-grid-3{ grid-template-columns:1fr !important; }
+}

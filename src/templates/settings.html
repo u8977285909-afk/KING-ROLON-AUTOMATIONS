@@ -1,0 +1,942 @@
+{% extends "base.html" %}
+{% set active_page = "settings" %}
+{% set disable_page_head = true %}
+
+{% block title %}Cuenta | KING ROLON{% endblock %}
+
+{% block content %}
+{% set _cu = current_user or {} %}
+{% set _name = '' if _cu.get('name') in [None, 'None'] else (_cu.get('name') or '') %}
+{% set _email = '' if _cu.get('email') in [None, 'None'] else (_cu.get('email') or '') %}
+{% set _username = '' if _cu.get('username') in [None, 'None'] else (_cu.get('username') or '') %}
+{% set _bio = '' if _cu.get('bio') in [None, 'None'] else (_cu.get('bio') or '') %}
+{% set _website = '' if _cu.get('website') in [None, 'None'] else (_cu.get('website') or '') %}
+{% set _banner = '' if _cu.get('banner_url') in [None, 'None'] else (_cu.get('banner_url') or '') %}
+{% set _avatar = '' if _cu.get('avatar_url') in [None, 'None'] else (_cu.get('avatar_url') or '') %}
+{% set _role = '' if _cu.get('role') in [None, 'None'] else (_cu.get('role') or 'FREE') %}
+{% set _is_public = (_cu.get('is_public', 0) | int) %}
+{% set _slug = '' if _cu.get('public_slug') in [None, 'None'] else (_cu.get('public_slug') or '') %}
+{% set _handle = _username or 'user' %}
+{% set _initial = ((_name or _email or 'U')[:1])|upper %}
+
+{% set _banner_x = 50 %}
+{% set _banner_y = 50 %}
+{% set _banner_scale = 1 %}
+{% if banner_transform is defined and banner_transform %}
+  {% set _banner_x = banner_transform.get("x", 50) %}
+  {% set _banner_y = banner_transform.get("y", 50) %}
+  {% set _banner_scale = banner_transform.get("scale", 1) %}
+{% endif %}
+
+<div class="kr-page kr-settings-page">
+  <div class="kr-settings-shell">
+
+    <section class="kr-settings-hero-pro">
+      <div class="kr-settings-cover">
+        {% if _banner %}
+          <div class="kr-settings-cover-media-wrap">
+            <img
+              src="{{ _banner }}"
+              alt="Portada del perfil"
+              class="kr-settings-cover-img"
+              style="transform: translate(-{{ 50 - _banner_x }}%, -{{ 50 - _banner_y }}%) scale({{ _banner_scale }});"
+            >
+          </div>
+        {% else %}
+          <div class="kr-settings-cover-fallback"></div>
+        {% endif %}
+        <div class="kr-settings-cover-overlay"></div>
+        <div class="kr-settings-cover-glow"></div>
+      </div>
+
+      <div class="kr-settings-hero-card-pro">
+        <div class="kr-settings-hero-top-pro">
+          <div class="kr-settings-avatar-wrap-pro">
+            {% if _avatar %}
+              <img src="{{ _avatar }}" alt="Avatar" class="kr-settings-avatar-pro">
+            {% else %}
+              <div class="kr-settings-avatar-pro kr-settings-avatar-fallback-pro">
+                <span>{{ _initial }}</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="kr-settings-main-pro">
+            <div class="kr-settings-title-row-pro">
+              <div class="kr-settings-identity">
+                <span class="kr-settings-mini-tag">Account Settings</span>
+                <h1 class="kr-settings-name-pro">{{ _name or 'Usuario' }}</h1>
+                <div class="kr-settings-handle-pro">@{{ _handle }}</div>
+
+                <div class="kr-settings-badges-row">
+                  <span class="kr-owner-badge">{{ _role or 'FREE' }}</span>
+
+                  {% if _is_public == 1 %}
+                    <span class="kr-owner-badge kr-tag-ok">Público</span>
+                  {% else %}
+                    <span class="kr-owner-badge kr-chip-off">Privado</span>
+                  {% endif %}
+
+                  <span class="kr-owner-badge">KR Profile</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="kr-settings-bio-pro">
+              {{ _bio if _bio else 'Personaliza tu cuenta para que tu perfil se vea premium y profesional.' }}
+            </div>
+
+            <div class="kr-settings-meta-grid">
+              <div class="kr-stat-pro">
+                <div class="kr-stat-num-pro">{{ _role or 'FREE' }}</div>
+                <div class="kr-stat-label-pro">Plan / Rol</div>
+              </div>
+
+              <div class="kr-stat-pro">
+                <div class="kr-stat-num-pro">{{ 'ON' if _is_public == 1 else 'OFF' }}</div>
+                <div class="kr-stat-label-pro">Perfil público</div>
+              </div>
+
+              <div class="kr-stat-pro">
+                <div class="kr-stat-num-pro">{{ '@' ~ _username if _username else '@user' }}</div>
+                <div class="kr-stat-label-pro">Username</div>
+              </div>
+
+              <div class="kr-stat-pro kr-stat-pro-highlight">
+                <div class="kr-stat-num-pro">KR</div>
+                <div class="kr-stat-label-pro">Exclusive Mode</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="kr-settings-layout-pro">
+      <div class="kr-settings-main-col">
+
+        <section class="kr-settings-card-pro">
+          <div class="kr-settings-card-head-pro">
+            <div>
+              <div class="kr-settings-card-kicker-pro">PROFILE</div>
+              <div class="kr-settings-card-title-pro">Editar perfil</div>
+              <div class="kr-settings-card-sub-pro">
+                Ajusta tu identidad pública, bio, username, web e idioma.
+              </div>
+            </div>
+          </div>
+
+          <form method="post" action="{{ url_for('settings') }}" class="kr-settings-form-pro">
+            <input type="hidden" name="action" value="update_profile">
+
+            <div class="kr-settings-form-grid">
+              <div class="kr-field">
+                <label for="new_name">Nombre</label>
+                <input
+                  id="new_name"
+                  type="text"
+                  name="new_name"
+                  value="{{ _name }}"
+                  class="kr-input"
+                  placeholder="Tu nombre"
+                >
+              </div>
+
+              <div class="kr-field">
+                <label for="username">Username</label>
+                <input
+                  id="username"
+                  type="text"
+                  name="username"
+                  value="{{ _username }}"
+                  class="kr-input"
+                  placeholder="edwinrolon"
+                >
+                <div class="kr-field-help">Usa letras minúsculas, números y guion bajo.</div>
+              </div>
+            </div>
+
+            <div class="kr-field">
+              <label for="email_disabled">Correo</label>
+              <input
+                id="email_disabled"
+                type="text"
+                value="{{ _email }}"
+                class="kr-input"
+                disabled
+              >
+            </div>
+
+            <div class="kr-field">
+              <label for="bio">Bio</label>
+              <textarea
+                id="bio"
+                name="bio"
+                class="kr-input kr-textarea"
+                placeholder="Cuéntale al mundo quién eres..."
+              >{{ _bio }}</textarea>
+            </div>
+
+            <div class="kr-settings-form-grid">
+              <div class="kr-field">
+                <label for="website">Sitio web</label>
+                <input
+                  id="website"
+                  type="text"
+                  name="website"
+                  value="{{ _website }}"
+                  class="kr-input"
+                  placeholder="https://..."
+                >
+              </div>
+
+              <div class="kr-field">
+                <label for="language">Idioma</label>
+                <select id="language" name="language" class="kr-input">
+                  <option value="es" {% if (lang or 'es') == 'es' %}selected{% endif %}>Español</option>
+                  <option value="en" {% if (lang or 'es') == 'en' %}selected{% endif %}>English</option>
+                  <option value="de" {% if (lang or 'es') == 'de' %}selected{% endif %}>Deutsch</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="kr-field">
+              <label for="banner_url">Banner URL (opcional)</label>
+              <input
+                id="banner_url"
+                type="text"
+                name="banner_url"
+                value="{{ _banner }}"
+                class="kr-input"
+                placeholder="https://.../banner.jpg"
+              >
+              <div class="kr-field-help">Puedes usar una URL o subir una portada directamente abajo.</div>
+            </div>
+
+            <div class="kr-settings-public-box-pro">
+              <div class="kr-settings-public-head-pro">
+                <div>
+                  <h3>Perfil público</h3>
+                  <p>Actívalo para que otros usuarios puedan ver tu perfil.</p>
+                </div>
+
+                <label class="kr-switch-wrap-pro">
+                  <input
+                    type="checkbox"
+                    name="is_public"
+                    value="1"
+                    {% if _is_public == 1 %}checked{% endif %}
+                  >
+                  <span class="kr-switch-slider-pro"></span>
+                  <span class="kr-switch-text-pro">{{ 'ON' if _is_public == 1 else 'OFF' }}</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="kr-settings-actions-pro">
+              <button type="submit" class="kr-btn kr-btn-gold">Guardar cambios</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="kr-settings-card-pro" id="banner">
+          <div class="kr-settings-card-head-pro">
+            <div>
+              <div class="kr-settings-card-kicker-pro">COVER</div>
+              <div class="kr-settings-card-title-pro">Foto de portada</div>
+              <div class="kr-settings-card-sub-pro">
+                Sube tu banner para que tu perfil se vea premium y exclusivo.
+              </div>
+            </div>
+          </div>
+
+          <div class="kr-banner-spec-box">
+            <div class="kr-banner-spec-title">Medida recomendada</div>
+            <div class="kr-banner-spec-value">1920 × 720 px</div>
+            <div class="kr-banner-spec-sub">Relación 8:3 · JPG, PNG o WEBP · menos de 10 MB</div>
+          </div>
+
+          <form
+            method="post"
+            action="{{ url_for('settings') }}"
+            enctype="multipart/form-data"
+            class="kr-settings-form-pro"
+          >
+            <input type="hidden" name="action" value="update_banner">
+
+            <div class="kr-settings-upload-preview">
+              {% if _banner %}
+                <img
+                  src="{{ _banner }}"
+                  alt="Vista previa del banner"
+                  class="kr-settings-upload-preview-img"
+                  style="transform: translate(-{{ 50 - _banner_x }}%, -{{ 50 - _banner_y }}%) scale({{ _banner_scale }});"
+                >
+              {% else %}
+                <div class="kr-settings-upload-preview-empty">
+                  <span>Tu portada aparecerá aquí</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="kr-field">
+              <label for="banner_file">Seleccionar portada</label>
+              <input
+                id="banner_file"
+                type="file"
+                name="banner_file"
+                accept=".png,.jpg,.jpeg,.webp"
+              >
+              <div class="kr-field-help">Formatos recomendados: JPG, PNG o WEBP. Medida ideal: 1920 × 720 px.</div>
+            </div>
+
+            <div class="kr-settings-actions-pro">
+              <button type="submit" class="kr-btn kr-btn-gold">Subir portada</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="kr-settings-card-pro">
+          <div class="kr-settings-card-head-pro">
+            <div>
+              <div class="kr-settings-card-kicker-pro">SECURITY</div>
+              <div class="kr-settings-card-title-pro">Cambiar contraseña</div>
+              <div class="kr-settings-card-sub-pro">
+                Mantén tu cuenta protegida con una contraseña segura.
+              </div>
+            </div>
+          </div>
+
+          <form method="post" action="{{ url_for('settings') }}" class="kr-settings-form-pro">
+            <input type="hidden" name="action" value="update_profile">
+
+            <div class="kr-field">
+              <label for="current_password">Contraseña actual</label>
+              <input
+                id="current_password"
+                type="password"
+                name="current_password"
+                class="kr-input"
+              >
+            </div>
+
+            <div class="kr-settings-form-grid">
+              <div class="kr-field">
+                <label for="new_password">Nueva contraseña</label>
+                <input
+                  id="new_password"
+                  type="password"
+                  name="new_password"
+                  class="kr-input"
+                >
+              </div>
+
+              <div class="kr-field">
+                <label for="confirm_password">Confirmar contraseña</label>
+                <input
+                  id="confirm_password"
+                  type="password"
+                  name="confirm_password"
+                  class="kr-input"
+                >
+              </div>
+            </div>
+
+            <div class="kr-settings-actions-pro">
+              <button type="submit" class="kr-btn kr-btn-outline">Actualizar contraseña</button>
+            </div>
+          </form>
+        </section>
+
+      </div>
+
+      <aside class="kr-settings-side-col">
+
+        <section class="kr-settings-card-pro">
+          <div class="kr-settings-card-head-pro">
+            <div>
+              <div class="kr-settings-card-kicker-pro">AVATAR</div>
+              <div class="kr-settings-card-title-pro">Foto de perfil</div>
+              <div class="kr-settings-card-sub-pro">
+                Esta imagen aparecerá en tu cuenta, comentarios y perfil público.
+              </div>
+            </div>
+          </div>
+
+          <form
+            method="post"
+            action="{{ url_for('settings') }}"
+            enctype="multipart/form-data"
+            class="kr-settings-form-pro"
+          >
+            <input type="hidden" name="action" value="update_avatar">
+
+            <div class="kr-settings-avatar-preview-box">
+              {% if _avatar %}
+                <img src="{{ _avatar }}" alt="Avatar actual" class="kr-settings-avatar-preview">
+              {% else %}
+                <div class="kr-settings-avatar-preview kr-settings-avatar-fallback-pro">
+                  <span>{{ _initial }}</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="kr-field">
+              <label for="avatar_file">Seleccionar avatar</label>
+              <input
+                id="avatar_file"
+                type="file"
+                name="avatar_file"
+                accept=".png,.jpg,.jpeg,.webp"
+              >
+            </div>
+
+            <div class="kr-settings-actions-pro">
+              <button type="submit" class="kr-btn kr-btn-gold">Subir avatar</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="kr-settings-card-pro">
+          <div class="kr-settings-card-head-pro">
+            <div>
+              <div class="kr-settings-card-kicker-pro">PUBLIC LINK</div>
+              <div class="kr-settings-card-title-pro">Tu perfil público</div>
+            </div>
+          </div>
+
+          <div class="kr-field">
+            <label>Ruta pública</label>
+            {% if _slug %}
+              <input type="text" class="kr-input" value="/u/{{ _slug }}" readonly>
+            {% elif _username %}
+              <input type="text" class="kr-input" value="/@{{ _username }}" readonly>
+            {% else %}
+              <input type="text" class="kr-input" value="/profile" readonly>
+            {% endif %}
+          </div>
+
+          <div class="kr-settings-link-note">
+            Comparte esta ruta para que otros puedan encontrarte dentro del ecosistema KR.
+          </div>
+        </section>
+
+        <section class="kr-settings-card-pro">
+          <div class="kr-settings-card-head-pro">
+            <div>
+              <div class="kr-settings-card-kicker-pro">PREMIUM IDENTITY</div>
+              <div class="kr-settings-card-title-pro">Estado visual</div>
+            </div>
+          </div>
+
+          <div class="kr-settings-status-list">
+            <div class="kr-settings-status-item">
+              <span>Avatar</span>
+              <strong>{{ 'Listo' if _avatar else 'Pendiente' }}</strong>
+            </div>
+            <div class="kr-settings-status-item">
+              <span>Portada</span>
+              <strong>{{ 'Listo' if _banner else 'Pendiente' }}</strong>
+            </div>
+            <div class="kr-settings-status-item">
+              <span>Bio</span>
+              <strong>{{ 'Listo' if _bio else 'Pendiente' }}</strong>
+            </div>
+            <div class="kr-settings-status-item">
+              <span>Perfil público</span>
+              <strong>{{ 'Activo' if _is_public == 1 else 'Oculto' }}</strong>
+            </div>
+          </div>
+        </section>
+
+      </aside>
+    </div>
+  </div>
+</div>
+
+<style>
+  .kr-settings-page {
+    width: 100%;
+  }
+
+  .kr-settings-shell {
+    display: grid;
+    gap: 18px;
+  }
+
+  .kr-settings-hero-pro {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at top left, rgba(255,215,0,.06), transparent 30%),
+      linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 24px 60px rgba(0,0,0,.22);
+  }
+
+  .kr-settings-cover {
+    position: relative;
+    height: 230px;
+    overflow: hidden;
+    background: #0f1016;
+  }
+
+  .kr-settings-cover-media-wrap {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  .kr-settings-cover-img,
+  .kr-settings-cover-fallback {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .kr-settings-cover-img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 112%;
+    height: 112%;
+    object-fit: cover;
+    transform-origin: center center;
+  }
+
+  .kr-settings-cover-fallback {
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255,215,0,.18), transparent 28%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,.08), transparent 24%),
+      linear-gradient(135deg, #11131c 0%, #181b27 45%, #0d0f16 100%);
+  }
+
+  .kr-settings-cover-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.56));
+  }
+
+  .kr-settings-cover-glow {
+    position: absolute;
+    left: 50%;
+    bottom: -50px;
+    transform: translateX(-50%);
+    width: 65%;
+    height: 120px;
+    filter: blur(40px);
+    background: rgba(255,215,0,.10);
+    pointer-events: none;
+  }
+
+  .kr-settings-hero-card-pro {
+    position: relative;
+    margin-top: -48px;
+    padding: 0 18px 18px;
+    z-index: 2;
+  }
+
+  .kr-settings-hero-top-pro {
+    display: grid;
+    grid-template-columns: 118px minmax(0,1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .kr-settings-avatar-wrap-pro {
+    display: flex;
+    justify-content: center;
+  }
+
+  .kr-settings-avatar-pro {
+    width: 118px;
+    height: 118px;
+    border-radius: 26px;
+    object-fit: cover;
+    border: 4px solid rgba(255,255,255,.12);
+    box-shadow: 0 18px 44px rgba(0,0,0,.30);
+    background: #111;
+  }
+
+  .kr-settings-avatar-fallback-pro {
+    display: grid;
+    place-items: center;
+    font-size: 38px;
+    font-weight: 900;
+    color: #fff;
+    background:
+      linear-gradient(135deg, rgba(255,215,0,.24), rgba(255,255,255,.08)),
+      #161821;
+  }
+
+  .kr-settings-main-pro {
+    min-width: 0;
+    display: grid;
+    gap: 12px;
+    padding: 14px 16px 16px;
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(20,22,32,.88), rgba(18,20,29,.82));
+    border: 1px solid rgba(255,255,255,.06);
+    box-shadow: 0 18px 40px rgba(0,0,0,.16);
+  }
+
+  .kr-settings-mini-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+    font-size: .74rem;
+    color: rgba(255,255,255,.76);
+    margin-bottom: 8px;
+  }
+
+  .kr-settings-name-pro {
+    margin: 0;
+    font-size: clamp(1.45rem, 2vw, 2.15rem);
+    line-height: 1.04;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  .kr-settings-handle-pro {
+    margin-top: 5px;
+    color: rgba(255,255,255,.68);
+    font-size: .96rem;
+    word-break: break-word;
+  }
+
+  .kr-settings-badges-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .kr-settings-bio-pro {
+    color: rgba(255,255,255,.9);
+    font-size: .97rem;
+    line-height: 1.55;
+    max-width: 900px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .kr-settings-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .kr-settings-layout-pro {
+    display: grid;
+    grid-template-columns: minmax(0,1.35fr) minmax(300px,.78fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .kr-settings-main-col,
+  .kr-settings-side-col {
+    display: grid;
+    gap: 16px;
+  }
+
+  .kr-settings-card-pro {
+    border-radius: 22px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 16px 40px rgba(0,0,0,.16);
+    padding: 18px;
+  }
+
+  .kr-settings-card-head-pro {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .kr-settings-card-kicker-pro {
+    color: #f0c85b;
+    font-size: .74rem;
+    font-weight: 900;
+    letter-spacing: .12em;
+  }
+
+  .kr-settings-card-title-pro {
+    color: #fff;
+    font-size: 1.12rem;
+    font-weight: 900;
+  }
+
+  .kr-settings-card-sub-pro {
+    color: rgba(255,255,255,.66);
+    font-size: .92rem;
+    line-height: 1.48;
+  }
+
+  .kr-settings-form-pro {
+    display: grid;
+    gap: 13px;
+  }
+
+  .kr-settings-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    gap: 13px;
+  }
+
+  .kr-banner-spec-box {
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(255,215,0,.08), rgba(255,255,255,.03));
+    border: 1px solid rgba(255,215,0,.16);
+  }
+
+  .kr-banner-spec-title {
+    color: #f0c85b;
+    font-size: .78rem;
+    font-weight: 900;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .kr-banner-spec-value {
+    margin-top: 4px;
+    color: #fff;
+    font-size: 1.08rem;
+    font-weight: 900;
+  }
+
+  .kr-banner-spec-sub {
+    margin-top: 4px;
+    color: rgba(255,255,255,.64);
+    font-size: .88rem;
+    line-height: 1.45;
+  }
+
+  .kr-field-help {
+    font-size: .82rem;
+    color: rgba(255,255,255,.56);
+    margin-top: 6px;
+  }
+
+  .kr-settings-public-box-pro {
+    margin-top: 4px;
+    padding: 15px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.07);
+  }
+
+  .kr-settings-public-head-pro {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .kr-settings-public-head-pro h3 {
+    margin: 0;
+    color: #fff;
+    font-size: .98rem;
+  }
+
+  .kr-settings-public-head-pro p {
+    margin: 4px 0 0;
+    color: rgba(255,255,255,.66);
+    font-size: .89rem;
+  }
+
+  .kr-switch-wrap-pro {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .kr-switch-wrap-pro input {
+    display: none;
+  }
+
+  .kr-switch-slider-pro {
+    width: 52px;
+    height: 30px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.14);
+    position: relative;
+    transition: background .2s ease;
+  }
+
+  .kr-switch-slider-pro::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #fff;
+    transition: transform .2s ease;
+  }
+
+  .kr-switch-wrap-pro input:checked + .kr-switch-slider-pro {
+    background: rgba(240,200,91,.8);
+  }
+
+  .kr-switch-wrap-pro input:checked + .kr-switch-slider-pro::after {
+    transform: translateX(22px);
+  }
+
+  .kr-switch-text-pro {
+    font-size: .8rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    color: #fff;
+  }
+
+  .kr-settings-actions-pro {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .kr-settings-upload-preview {
+    width: 100%;
+    aspect-ratio: 8 / 3;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #111;
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 12px 24px rgba(0,0,0,.22);
+    position: relative;
+  }
+
+  .kr-settings-upload-preview-img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 112%;
+    height: 112%;
+    object-fit: cover;
+    display: block;
+    transform-origin: center center;
+  }
+
+  .kr-settings-upload-preview-empty {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    color: rgba(255,255,255,.56);
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255,215,0,.18), transparent 28%),
+      linear-gradient(135deg,#11131c 0%,#181b27 45%,#0d0f16 100%);
+  }
+
+  .kr-settings-avatar-preview-box {
+    display: flex;
+    justify-content: center;
+  }
+
+  .kr-settings-avatar-preview {
+    width: 118px;
+    height: 118px;
+    border-radius: 26px;
+    object-fit: cover;
+    background: #111;
+    border: 3px solid rgba(255,255,255,.1);
+    box-shadow: 0 16px 34px rgba(0,0,0,.22);
+  }
+
+  .kr-settings-link-note {
+    color: rgba(255,255,255,.64);
+    font-size: .9rem;
+    line-height: 1.48;
+    margin-top: 4px;
+  }
+
+  .kr-settings-status-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .kr-settings-status-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,.03);
+    border: 1px solid rgba(255,255,255,.06);
+    color: rgba(255,255,255,.8);
+  }
+
+  .kr-settings-status-item strong {
+    color: #fff;
+  }
+
+  @media (max-width:1180px) {
+    .kr-settings-layout-pro {
+      grid-template-columns: 1fr;
+    }
+
+    .kr-settings-meta-grid {
+      grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+  }
+
+  @media (max-width:780px) {
+    .kr-settings-cover {
+      height: 185px;
+    }
+
+    .kr-settings-hero-card-pro {
+      margin-top: -40px;
+      padding: 0 14px 16px;
+    }
+
+    .kr-settings-hero-top-pro {
+      grid-template-columns: 1fr;
+    }
+
+    .kr-settings-avatar-wrap-pro {
+      justify-content: flex-start;
+    }
+
+    .kr-settings-avatar-pro {
+      width: 102px;
+      height: 102px;
+      border-radius: 22px;
+    }
+
+    .kr-settings-form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .kr-settings-meta-grid {
+      grid-template-columns: repeat(2, minmax(0,1fr));
+    }
+  }
+
+  @media (max-width:520px) {
+    .kr-settings-meta-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .kr-settings-card-pro {
+      padding: 15px;
+    }
+
+    .kr-settings-name-pro {
+      font-size: 1.38rem;
+    }
+  }
+</style>
+{% endblock %}

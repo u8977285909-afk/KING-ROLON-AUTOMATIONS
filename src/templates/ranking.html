@@ -1,0 +1,197 @@
+{# templates/ranking.html — KING ROLON AUTOMATIONS PRO — PREMIUM IMPACT BAR ✅
+#} {% extends "base.html" %} {% block title %} {{ (t('nav.ranking') if t else
+'Ranking') }} | {{ (t('app.name') if t else 'KING ROLON AUTOMATIONS') }} {%
+endblock %} {% block page_title %} {{ (t('nav.ranking') if t else 'Ranking
+Global') }} {% endblock %} {% block page_subtitle %} {{ (t('ranking.subtitle')
+if t else 'Clasificación global por impacto total en la plataforma.') }} {%
+endblock %} {% block content %} {% set _first_score = (rows[0].score if rows and
+rows|length > 0 and rows[0] is defined else 1) %} {% set max_score =
+(_first_score|int) if (_first_score is not none) else 1 %} {% if max_score <= 0
+%}{% set max_score = 1 %}{% endif %}
+
+<div class="kr-grid kr-grid-2 kr-ranking-layout">
+  <!-- ===================================================== -->
+  <!-- RANKING TABLE -->
+  <!-- ===================================================== -->
+  <section class="kr-card kr-ranking-card">
+    <div class="kr-row-between">
+      <div>
+        <div class="kr-card-title">
+          🏆 {{ (t('ranking.global') if t else 'Ranking Global') }}
+        </div>
+        <div class="kr-card-label">
+          Ordenado por score total (followers + likes*2 + collections*3 +
+          points)
+        </div>
+      </div>
+      <span class="kr-tag kr-tag-ok">TOP 200</span>
+    </div>
+
+    <div class="kr-divider"></div>
+
+    {% if rows and rows|length > 0 %}
+    <div class="kr-table-wrap">
+      <table class="kr-table kr-table-pro kr-ranking-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Followers</th>
+            <th>Likes</th>
+            <th>Collections</th>
+            <th>Puntos</th>
+            <th>Score</th>
+            <th>Impacto</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for r in rows %} {% set pos = loop.index %} {% set is_me =
+          (r.user_id|int == me|int) %} {% set score_val = (r.score|int) if
+          (r.score is not none) else 0 %} {% set _pct = (score_val / max_score *
+          100) if max_score > 0 else 0 %} {% if _pct < 0 %} {% set percent = 0
+          %} {% elif _pct > 100 %} {% set percent = 100 %} {% else %} {% set
+          percent = _pct %} {% endif %}
+
+          <tr class="{% if is_me %}kr-row-highlight{% endif %}">
+            <!-- POSICIÓN -->
+            <td>
+              {% if pos == 1 %}
+              <span class="kr-rank-medal">🥇</span>
+              {% elif pos == 2 %}
+              <span class="kr-rank-medal">🥈</span>
+              {% elif pos == 3 %}
+              <span class="kr-rank-medal">🥉</span>
+              {% else %}
+              <span class="kr-rank">#{{ pos }}</span>
+              {% endif %}
+            </td>
+
+            <!-- USER -->
+            <td class="kr-ranking-usercell">
+              <div class="kr-ranking-user-main">
+                <span>{{ r.display_name }}</span>
+                {% if is_me %}
+                <span class="kr-badge kr-badge-ok">TÚ</span>
+                {% endif %}
+              </div>
+              <div class="kr-ranking-user-sub">ID: {{ r.user_id }}</div>
+            </td>
+
+            <!-- ROLE -->
+            <td>
+              <span class="kr-tag kr-ranking-role">{{ r.role or 'FREE' }}</span>
+            </td>
+
+            <td>{{ r.followers or 0 }}</td>
+            <td>{{ r.likes_received or 0 }}</td>
+            <td>{{ r.collections_received or 0 }}</td>
+
+            <!-- SYSTEM POINTS -->
+            <td>
+              <span class="kr-tag kr-ranking-points">{{ r.points or 0 }}</span>
+            </td>
+
+            <!-- SCORE -->
+            <td>
+              <span class="kr-tag kr-tag-ok kr-ranking-score"
+                >{{ score_val }}</span
+              >
+            </td>
+
+            <!-- IMPACTO PREMIUM -->
+            <td class="kr-impact-cell">
+              <div class="kr-impact-wrapper">
+                <div
+                  class="kr-progress kr-progress-impact {% if percent >= 80 %} is-elite {% elif percent >= 55 %} is-strong {% elif percent >= 30 %} is-medium {% else %} is-low {% endif %}"
+                  title="{{ percent|round(1) }}%"
+                >
+                  <div
+                    class="kr-progress-bar kr-progress-bar-impact"
+                    style="width: {{ percent }}%"
+                  ></div>
+
+                  <span class="kr-progress-glow"></span>
+                </div>
+
+                <span class="kr-impact-percent"> {{ percent|round(0) }}% </span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="kr-empty">
+      No hay datos suficientes para mostrar el ranking.
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ===================================================== -->
+  <!-- SISTEMA DE CÁLCULO -->
+  <!-- ===================================================== -->
+  <aside class="kr-ranking-side">
+    <section class="kr-card kr-ranking-info-card">
+      <div class="kr-card-title">📊 Cómo se calcula</div>
+      <div class="kr-card-label">Sistema competitivo acumulativo.</div>
+
+      <div class="kr-divider"></div>
+
+      <ul class="kr-list">
+        <li>
+          <div class="kr-td-title">Followers</div>
+          <div class="kr-td-sub">Cada seguidor suma 1 punto.</div>
+        </li>
+        <li>
+          <div class="kr-td-title">Likes</div>
+          <div class="kr-td-sub">Cada like recibido suma 2 puntos.</div>
+        </li>
+        <li>
+          <div class="kr-td-title">Collections</div>
+          <div class="kr-td-sub">Cada colección suma 3 puntos.</div>
+        </li>
+        <li>
+          <div class="kr-td-title">Puntos del sistema</div>
+          <div class="kr-td-sub">Se agregan directamente al score total.</div>
+        </li>
+      </ul>
+
+      <div class="kr-divider"></div>
+
+      <div class="kr-soft kr-text-xs">
+        Próximo nivel: puntos por vistas, en vivos y sistema de rangos estilo
+        videojuego.
+      </div>
+    </section>
+
+    <section class="kr-card kr-ranking-info-card">
+      <div class="kr-card-title">🎯 Lectura del impacto</div>
+      <div class="kr-card-label">Barra visual profesional por nivel.</div>
+
+      <div class="kr-divider"></div>
+
+      <ul class="kr-list">
+        <li>
+          <div class="kr-td-title">Rojo</div>
+          <div class="kr-td-sub">Impacto bajo · 0% a 29%</div>
+        </li>
+        <li>
+          <div class="kr-td-title">Dorado</div>
+          <div class="kr-td-sub">Impacto medio · 30% a 54%</div>
+        </li>
+        <li>
+          <div class="kr-td-title">Verde</div>
+          <div class="kr-td-sub">Impacto fuerte · 55% a 79%</div>
+        </li>
+        <li>
+          <div class="kr-td-title">Azul premium</div>
+          <div class="kr-td-sub">Impacto élite · 80% a 100%</div>
+        </li>
+      </ul>
+    </section>
+  </aside>
+</div>
+{% endblock %}

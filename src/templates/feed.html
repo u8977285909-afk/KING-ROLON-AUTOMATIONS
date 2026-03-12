@@ -1,0 +1,266 @@
+{# templates/feed.html — KING ROLON AUTOMATIONS (FEED) #}
+{% extends "base.html" %}
+
+{# ✅ Endpoints SAFE (sirve si son watch_video/delete_video o vm_watch_video/vm_delete_video) #}
+{% set EP_WATCH  = 'watch_video'  if endpoint_exists('watch_video')  else ('vm_watch_video'  if endpoint_exists('vm_watch_video')  else '') %}
+{% set EP_DELETE = 'delete_video' if endpoint_exists('delete_video') else ('vm_delete_video' if endpoint_exists('vm_delete_video') else '') %}
+{% set EP_STREAM = 'stream_video' if endpoint_exists('stream_video') else ('vm_stream_video' if endpoint_exists('vm_stream_video') else '') %}
+{% set EP_UPLOAD = 'upload_video_page' if endpoint_exists('upload_video_page') else ('vm_upload_video_page' if endpoint_exists('vm_upload_video_page') else '') %}
+{% set EP_LIB    = 'videos_library' if endpoint_exists('videos_library') else ('vm_videos_library' if endpoint_exists('vm_videos_library') else '') %}
+
+{% block title %}
+  {{ (t('nav.videos') if t else 'Videos') }} | {{ (t('app.name') if t else 'KING ROLON AUTOMATIONS') }}
+{% endblock %}
+
+{% block page_title %}{{ (t('nav.videos') if t else 'Videos') }}{% endblock %}
+{% block page_subtitle %}
+  Centro de contenido KR. Publica, organiza y monetiza con control total.
+{% endblock %}
+
+{% block content %}
+<div class="kr-page">
+  <div class="kr-page-actions"
+       style="display:flex; justify-content:flex-end; gap:0.6rem; flex-wrap:wrap; margin-bottom:1rem;">
+
+    {% if EP_UPLOAD %}
+      <a class="kr-btn" href="{{ url_for(EP_UPLOAD) }}">Subir video</a>
+    {% endif %}
+
+    {% if EP_LIB %}
+      <a class="kr-btn" href="{{ url_for(EP_LIB) }}">Mi biblioteca</a>
+    {% endif %}
+  </div>
+
+  {% if not videos %}
+    <div class="kr-card" style="padding:1rem">
+      <div style="font-weight:800">Aún no hay videos para mostrar.</div>
+      <div style="opacity:0.85; margin-top:0.5rem">
+        Sube tu primer video y empieza a construir tu canal KR.
+      </div>
+      <div style="margin-top:0.8rem; display:flex; gap:0.6rem; flex-wrap:wrap">
+        {% if EP_UPLOAD %}
+          <a class="kr-btn" href="{{ url_for(EP_UPLOAD) }}">Subir ahora</a>
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+
+    <div class="kr-grid"
+         style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1rem;">
+      {% for v in videos %}
+        {% set vid = v.get('id') %}
+        {% set title = (v.get('title') or '')|string|trim %}
+        {% set desc = (v.get('description') or '')|string %}
+        {% set created = (v.get('created_at') or '—')|string %}
+        {% set sizeb = (v.get('size_bytes') or 0) %}
+        {% set vis = (v.get('visibility') or 'public')|string|lower %}
+        {% set owner_id = (v.get('user_id') or 0) %}
+        {% set is_owner = (v.get('is_mine') if (v.get('is_mine') is not none) else false) %}
+        {% set can_follow = (v.get('can_follow') if (v.get('can_follow') is not none) else false) %}
+        {% set following = (v.get('following') if (v.get('following') is not none) else false) %}
+        {% set can_like = (v.get('can_like') if (v.get('can_like') is not none) else false) %}
+        {% set liked = (v.get('liked') if (v.get('liked') is not none) else false) %}
+        {% set likes_count = (v.get('likes_count') if (v.get('likes_count') is not none) else 0) %}
+        {% set can_collect = (v.get('can_collect') if (v.get('can_collect') is not none) else false) %}
+        {% set collected = (v.get('collected') if (v.get('collected') is not none) else false) %}
+        {% set views = (v.get('views_count') or 0) %}
+
+        <div class="kr-card" style="padding:1rem">
+
+          {% if EP_WATCH %}
+            <a href="{{ url_for(EP_WATCH, video_id=vid) }}"
+               style="display:block; text-decoration:none; color:inherit"
+               aria-label="Ver video">
+          {% else %}
+            <a href="#"
+               style="display:block; text-decoration:none; color:inherit"
+               aria-label="Ver video">
+          {% endif %}
+
+              <div style="border-radius:14px; overflow:hidden; background:rgba(255,255,255,0.04);">
+                <video muted preload="metadata" playsinline
+                       style="width:100%; height:auto; display:block"
+                       onmouseenter="try{this.play()}catch(e){}"
+                       onmouseleave="try{this.pause(); this.currentTime=0}catch(e){}">
+                  {% if EP_STREAM %}
+                    <source src="{{ url_for(EP_STREAM, video_id=vid) }}" />
+                  {% endif %}
+                  Tu navegador no soporta video HTML5.
+                </video>
+              </div>
+            </a>
+
+          <div style="margin-top:0.8rem">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:0.6rem;">
+              <div style="min-width:0">
+                <div style="font-weight:900; font-size:1.02rem; line-height:1.2;">
+                  {{ title if title else 'Sin título' }}
+                </div>
+                <div style="opacity:0.65; margin-top:0.35rem; font-size:0.85rem">
+                  {{ created }} · {{ sizeb }} bytes
+                </div>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap; justify-content:flex-end;">
+                <span class="kr-badge" style="font-size:0.78rem">
+                  {% if vis == 'private' %}🔒 Solo tú{% elif vis == 'contacts' %}👥 Contactos{% else %}🌍 Público{% endif %}
+                </span>
+
+                <span class="kr-badge" style="font-size:0.78rem">👁️ {{ views }}</span>
+
+                {% if can_follow and owner_id %}
+                  <button class="kr-btn" type="button"
+                          data-follow-btn="1"
+                          data-target-user="{{ owner_id }}"
+                          data-following="{{ '1' if following else '0' }}"
+                          style="padding:0.45rem 0.7rem; font-size:0.85rem">
+                    {{ 'Siguiendo' if following else 'Seguir' }}
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if desc|trim %}
+              <div style="opacity:0.85; margin-top:0.55rem; white-space:pre-wrap">{{ desc }}</div>
+            {% endif %}
+
+            <div style="display:flex; gap:0.6rem; margin-top:0.8rem; flex-wrap:wrap; justify-content:space-between; align-items:center;">
+
+              {% if EP_WATCH %}
+                <a class="kr-btn" href="{{ url_for(EP_WATCH, video_id=vid) }}" style="padding:0.5rem 0.8rem">Ver</a>
+              {% else %}
+                <a class="kr-btn" href="#" style="padding:0.5rem 0.8rem">Ver</a>
+              {% endif %}
+
+              <div style="display:flex; gap:0.45rem; flex-wrap:wrap; justify-content:flex-end;">
+                {% if can_like %}
+                  <button class="kr-btn" type="button"
+                          data-like-btn="1" data-video-id="{{ vid }}"
+                          data-liked="{{ '1' if liked else '0' }}"
+                          style="padding:0.5rem 0.8rem" aria-label="Me gusta" title="Me gusta">
+                    <span data-like-icon="1">{{ '❤️' if liked else '🤍' }}</span>
+                    <span data-like-count="1" style="margin-left:0.35rem">{{ likes_count }}</span>
+                  </button>
+                {% endif %}
+
+                {% if can_collect %}
+                  <button class="kr-btn" type="button"
+                          data-collect-btn="1" data-video-id="{{ vid }}"
+                          data-collected="{{ '1' if collected else '0' }}"
+                          style="padding:0.5rem 0.8rem" aria-label="Coleccionar" title="Coleccionar">
+                    {{ 'En biblioteca' if collected else 'Coleccionar' }}
+                  </button>
+                {% endif %}
+
+                {% if is_owner and EP_DELETE %}
+                  <form method="POST" action="{{ url_for(EP_DELETE, video_id=vid) }}"
+                        onsubmit="return confirm('¿Seguro que quieres eliminar este video?');"
+                        style="margin:0">
+                    <button class="kr-btn kr-btn-danger" type="submit" style="padding:0.5rem 0.8rem">
+                      Eliminar
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function krPostJSON(url) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Accept": "application/json" },
+      credentials: "same-origin",
+    });
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+    return { res, data };
+  }
+
+  async function krFollowToggle(btn) {
+    const target = btn?.dataset?.targetUser;
+    if (!target) return;
+
+    const oldText = btn.textContent;
+    btn.disabled = true; btn.textContent = "...";
+
+    try {
+      const { res, data } = await krPostJSON(`/api/follow/${target}`);
+      if (!res.ok || !data.ok) throw new Error("follow_failed");
+      const isFollowing = !!data.following;
+      btn.dataset.following = isFollowing ? "1" : "0";
+      btn.textContent = isFollowing ? "Siguiendo" : "Seguir";
+    } catch (e) {
+      btn.textContent = oldText;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function krLikeToggle(btn) {
+    const vid = btn?.dataset?.videoId;
+    if (!vid) return;
+
+    const iconEl = btn.querySelector("[data-like-icon='1']");
+    const countEl = btn.querySelector("[data-like-count='1']");
+    const oldIcon = iconEl ? iconEl.textContent : "";
+    const oldCount = countEl ? countEl.textContent : "";
+
+    btn.disabled = true; btn.style.opacity = "0.8";
+
+    try {
+      const { res, data } = await krPostJSON(`/api/videos/like/${vid}`);
+      if (!res.ok || !data.ok) throw new Error("like_failed");
+      const liked = !!data.liked;
+      const count = Number(data.likes_count || 0);
+      btn.dataset.liked = liked ? "1" : "0";
+      if (iconEl) iconEl.textContent = liked ? "❤️" : "🤍";
+      if (countEl) countEl.textContent = String(count);
+    } catch (e) {
+      if (iconEl) iconEl.textContent = oldIcon;
+      if (countEl) countEl.textContent = oldCount;
+    } finally {
+      btn.disabled = false; btn.style.opacity = "1";
+    }
+  }
+
+  async function krCollectToggle(btn) {
+    const vid = btn?.dataset?.videoId;
+    if (!vid) return;
+
+    const oldText = btn.textContent;
+    btn.disabled = true; btn.textContent = "...";
+
+    try {
+      const { res, data } = await krPostJSON(`/api/videos/collect/${vid}`);
+      if (!res.ok || !data.ok) throw new Error("collect_failed");
+      const collected = !!data.collected;
+      btn.dataset.collected = collected ? "1" : "0";
+      btn.textContent = collected ? "En biblioteca" : "Coleccionar";
+    } catch (e) {
+      btn.textContent = oldText;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.addEventListener("click", (e) => {
+    const followBtn = e.target.closest("[data-follow-btn='1']");
+    if (followBtn) { e.preventDefault(); krFollowToggle(followBtn); return; }
+
+    const likeBtn = e.target.closest("[data-like-btn='1']");
+    if (likeBtn) { e.preventDefault(); krLikeToggle(likeBtn); return; }
+
+    const collectBtn = e.target.closest("[data-collect-btn='1']");
+    if (collectBtn) { e.preventDefault(); krCollectToggle(collectBtn); return; }
+  });
+</script>
+{% endblock %}

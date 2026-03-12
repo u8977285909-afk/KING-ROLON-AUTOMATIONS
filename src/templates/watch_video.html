@@ -1,0 +1,971 @@
+{# templates/watch_video.html — KING ROLON AUTOMATIONS (WATCH) — FINAL SUPREME
+POLISHED + THUMBNAIL POSTER PRO ✅ #} {% extends "base.html" %} {% set _views =
+(app.view_functions if app is defined and app.view_functions is defined else {})
+%} {% set EP_FEED = ('videos_feed' if ('videos_feed' in _views) else
+('vm_videos_feed' if ('vm_videos_feed' in _views) else '')) %} {% set EP_STREAM
+= ('stream_video' if ('stream_video' in _views) else ('vm_stream_video' if
+('vm_stream_video' in _views) else '')) %} {% set EP_THUMB = ('video_thumb' if
+('video_thumb' in _views) else ('vm_video_thumb' if ('vm_video_thumb' in _views)
+else '')) %} {% set _vid = (video.id if video and video.id else '') %} {# API
+ENDPOINTS SAFE #} {% if 'api_video_comments' in _views %} {% set API_COMMENTS =
+url_for('api_video_comments', video_id=_vid) %} {% elif 'vm_api_video_comments'
+in _views %} {% set API_COMMENTS = url_for('vm_api_video_comments',
+video_id=_vid) %} {% else %} {% set API_COMMENTS = '/api/videos/comments/' ~
+_vid %} {% endif %} {% if 'api_video_comment' in _views %} {% set API_COMMENT =
+url_for('api_video_comment', video_id=_vid) %} {% elif 'vm_api_video_comment' in
+_views %} {% set API_COMMENT = url_for('vm_api_video_comment', video_id=_vid) %}
+{% else %} {% set API_COMMENT = '/api/videos/comment/' ~ _vid %} {% endif %} {%
+if 'api_video_like' in _views %} {% set API_LIKE = url_for('api_video_like',
+video_id=_vid) %} {% elif 'vm_api_video_like' in _views %} {% set API_LIKE =
+url_for('vm_api_video_like', video_id=_vid) %} {% else %} {% set API_LIKE =
+'/api/videos/like/' ~ _vid %} {% endif %} {% if 'api_video_collect' in _views %}
+{% set API_COLLECT = url_for('api_video_collect', video_id=_vid) %} {% elif
+'vm_api_video_collect' in _views %} {% set API_COLLECT =
+url_for('vm_api_video_collect', video_id=_vid) %} {% else %} {% set API_COLLECT
+= '/api/videos/collect/' ~ _vid %} {% endif %} {% set _lbl_app = (t('app.name')
+if t else 'KR') %} {% set _creator_username = (video.creator_username if video
+and video.creator_username is defined else '') %} {% set _creator_name =
+(video.creator_name if video and video.creator_name is defined else '') %} {%
+set _creator_public_slug = (video.creator_public_slug if video and
+video.creator_public_slug is defined else '') %} {% set _creator_verified =
+(video.creator_verified if video and video.creator_verified is defined else 0)
+%} {% set _hashtags = (video.hashtags if video and video.hashtags is defined and
+video.hashtags else []) %} {% set _views0 = (video.views_count if video and
+video.views_count is defined else 0) %} {% set _likes0 = (video.likes_count if
+video and video.likes_count is defined else 0) %} {% set _saves0 =
+(video.collections_count if video and video.collections_count is defined else 0)
+%} {% set _c0 = (video.comments_count if video and video.comments_count is
+defined else 0) %} {% set _is_mine = (video.is_mine if video and video.is_mine
+is defined else false) %} {% set _can_follow = (video.can_follow if video and
+video.can_follow is defined else false) %} {% set _following = (video.following
+if video and video.following is defined else false) %} {% set _can_like =
+(video.can_like if video and video.can_like is defined else false) %} {% set
+_liked = (video.liked if video and video.liked is defined else false) %} {% set
+_can_collect = (video.can_collect if video and video.can_collect is defined else
+false) %} {% set _collected = (video.collected if video and video.collected is
+defined else false) %} {% set _thumb_filename = (video.thumbnail_filename if
+video and video.thumbnail_filename is defined else '') %} {% set _has_thumb =
+(_thumb_filename|string|trim) != '' %} {% set _thumb_pos_x =
+(video.thumbnail_pos_x if video and video.thumbnail_pos_x is defined and
+video.thumbnail_pos_x is not none else 50) %} {% set _thumb_pos_y =
+(video.thumbnail_pos_y if video and video.thumbnail_pos_y is defined and
+video.thumbnail_pos_y is not none else 50) %} {% set _thumb_scale =
+(video.thumbnail_scale if video and video.thumbnail_scale is defined and
+video.thumbnail_scale is not none else 1) %} {% if 'api_follow_toggle_v1' in
+_views %} {% set _follow_endpoint = 'api_follow_toggle_v1' %} {% elif
+'api_follow_toggle' in _views %} {% set _follow_endpoint = 'api_follow_toggle'
+%} {% else %} {% set _follow_endpoint = '' %} {% endif %} {% if _follow_endpoint
+and video and video.user_id %} {% set _follow_url = url_for(_follow_endpoint,
+target_id=video.user_id) %} {% else %} {% set _follow_url = '/api/follow/' ~
+(video.user_id if video and video.user_id else 0) %} {% endif %} {% block title
+%}{{ (video.title if video and video.title else 'Ver video') }} | {{ _lbl_app
+}}{% endblock %} {% set disable_page_head = true %} {% block content %}
+<div class="kr-page kr-watch-page">
+  <div class="kr-watch-topbar">
+    {% if EP_FEED %}
+    <a class="kr-btn kr-btn-xs kr-btn-outline" href="{{ url_for(EP_FEED) }}"
+      >⬅ Volver</a
+    >
+    {% else %}
+    <a class="kr-btn kr-btn-xs kr-btn-outline" href="/videos">⬅ Volver</a>
+    {% endif %}
+  </div>
+
+  <div
+    class="kr-grid"
+    style="
+      grid-template-columns: minmax(0, 1fr) 340px;
+      align-items: start;
+      gap: 18px;
+    "
+  >
+    <div class="kr-card kr-watch-card">
+      <div class="kr-player">
+        <div class="kr-player-frame">
+          <div
+            class="kr-player-poster{% if _has_thumb %} has-thumb{% endif %}"
+            id="krPlayerPoster"
+            {%
+            if
+            not
+            _has_thumb
+            %}hidden{%
+            endif
+            %}
+          >
+            {% if _has_thumb and EP_THUMB and video and video.id %}
+            <img
+              class="kr-player-poster-image"
+              src="{{ url_for(EP_THUMB, video_id=video.id) }}"
+              alt="{{ (video.title|string|trim) if (video and video.title) else 'Miniatura del video' }}"
+              loading="eager"
+              decoding="async"
+              style="object-position: {{ _thumb_pos_x }}% {{ _thumb_pos_y }}%; transform: scale({{ _thumb_scale }});"
+            />
+            {% endif %}
+
+            <button
+              type="button"
+              class="kr-player-poster-play"
+              id="krPlayerPosterPlay"
+              aria-label="Reproducir video"
+              title="Reproducir video"
+            >
+              ▶
+            </button>
+          </div>
+
+          <video
+            class="kr-player-video"
+            id="krWatchVideoPlayer"
+            controls
+            preload="metadata"
+            playsinline
+            {%
+            if
+            _has_thumb
+            and
+            EP_THUMB
+            and
+            video
+            and
+            video.id
+            %}
+            poster="{{ url_for(EP_THUMB, video_id=video.id) }}"
+            {%
+            endif
+            %}
+          >
+            {% if EP_STREAM and video and video.id %}
+            <source src="{{ url_for(EP_STREAM, video_id=video.id) }}" />
+            {% endif %} Tu navegador no soporta video HTML5.
+          </video>
+        </div>
+      </div>
+
+      <div class="kr-watch-meta">
+        <div class="kr-watch-title">
+          {{ (video.title|string|trim) if (video and video.title) else 'Sin
+          título' }}
+        </div>
+
+        <div class="kr-watch-subinfo">
+          {% if _creator_username or _creator_name %}
+          <span class="kr-video-card-creator-line">
+            <span class="kr-video-card-creator-label">por</span>
+
+            {% if _creator_public_slug and 'public_profile_slug' in _views %}
+            <a
+              class="kr-video-card-creator-link"
+              href="{{ url_for('public_profile_slug', slug=_creator_public_slug) }}"
+            >
+              {{ '@' ~ _creator_username if _creator_username else _creator_name
+              }}
+            </a>
+            {% elif _creator_username and 'public_profile_handle' in _views %}
+            <a
+              class="kr-video-card-creator-link"
+              href="{{ url_for('public_profile_handle', username=_creator_username) }}"
+            >
+              {{ '@' ~ _creator_username }}
+            </a>
+            {% else %}
+            <span class="kr-video-card-creator-link">
+              {{ '@' ~ _creator_username if _creator_username else _creator_name
+              }}
+            </span>
+            {% endif %} {% if _creator_verified %}
+            <span title="Verificado">✔</span>
+            {% endif %}
+          </span>
+          <span>•</span>
+          {% endif %}
+
+          <span
+            ><strong data-stats-views="1">{{ _views0 }}</strong>
+            visualizaciones</span
+          >
+          <span>•</span>
+          <span
+            ><strong data-like-count-main="1">{{ _likes0 }}</strong> likes</span
+          >
+          <span>•</span>
+          <span
+            ><strong data-collect-count-main="1">{{ _saves0 }}</strong>
+            guardados</span
+          >
+          <span>•</span>
+          <span
+            ><strong data-stats-comments="1">{{ _c0 }}</strong>
+            comentarios</span
+          >
+        </div>
+
+        <div class="kr-watch-actions">
+          {% if _can_like %}
+          <button
+            class="kr-btn"
+            type="button"
+            id="krWatchLikeBtn"
+            data-liked="{{ '1' if _liked else '0' }}"
+            aria-label="Me gusta"
+            title="Me gusta"
+          >
+            <span data-like-icon="1">{{ '❤️' if _liked else '🤍' }}</span>
+            <span style="margin-left: 6px" data-like-count-inline="1"
+              >{{ _likes0 }}</span
+            >
+          </button>
+          {% endif %} {% if _can_collect %}
+          <button
+            class="kr-btn"
+            type="button"
+            id="krWatchCollectBtn"
+            data-collected="{{ '1' if _collected else '0' }}"
+            aria-label="Coleccionar"
+            title="Coleccionar"
+          >
+            <span data-collect-text="1"
+              >{{ 'En biblioteca' if _collected else 'Coleccionar' }}</span
+            >
+          </button>
+          {% endif %} {% if _hashtags and EP_FEED %}
+          <a
+            class="kr-btn kr-btn-outline"
+            href="{{ url_for(EP_FEED, q=_hashtags[0], sort='viral') }}"
+          >
+            Explorar similares
+          </a>
+          {% endif %}
+        </div>
+
+        {% if _hashtags %}
+        <div class="kr-video-card-hashtags" style="display: flex !important">
+          {% for tag in _hashtags[:8] %} {% if EP_FEED %}
+          <a
+            class="kr-video-hashtag"
+            href="{{ url_for(EP_FEED, q=tag, sort='viral') }}"
+          >
+            {{ tag }}
+          </a>
+          {% else %}
+          <a class="kr-video-hashtag" href="/videos?q={{ tag|urlencode }}">
+            {{ tag }}
+          </a>
+          {% endif %} {% endfor %}
+        </div>
+        {% endif %} {% if video and video.description %}
+        <div class="kr-watch-desc">{{ video.description }}</div>
+        {% endif %}
+
+        <div class="kr-watch-comments">
+          <div class="kr-watch-comments-head">
+            <div class="kr-watch-comments-title">
+              Comentarios (<span data-stats-comments="1">{{ _c0 }}</span>)
+            </div>
+          </div>
+
+          <div class="kr-watch-comment-box">
+            <textarea
+              id="krCommentText"
+              class="kr-input"
+              rows="3"
+              placeholder="Escribe un comentario..."
+              style="width: 100%; resize: vertical"
+            ></textarea>
+
+            <div
+              style="
+                margin-top: 10px;
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
+              "
+            >
+              <button
+                id="krCommentSend"
+                class="kr-btn kr-btn-gold"
+                type="button"
+              >
+                Publicar
+              </button>
+            </div>
+
+            <div
+              id="krCommentError"
+              class="kr-muted"
+              style="display: none; margin-top: 8px"
+            ></div>
+          </div>
+
+          <div id="krCommentList" class="kr-watch-comment-list">
+            <div class="kr-muted">Cargando comentarios…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside
+      class="kr-videos-sidepanel-final"
+      style="display: flex; flex-direction: column; gap: 16px"
+    >
+      <section class="kr-card">
+        <div class="kr-card-title">👑 Creador</div>
+        <div class="kr-card-label">Perfil del video y conexión social</div>
+
+        <div
+          style="
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          "
+        >
+          <div
+            style="
+              width: 56px;
+              height: 56px;
+              border-radius: 18px;
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              background:
+                radial-gradient(
+                  circle at 30% 25%,
+                  rgba(247, 227, 156, 0.18),
+                  transparent 55%
+                ),
+                radial-gradient(
+                  circle at 70% 30%,
+                  rgba(124, 140, 247, 0.15),
+                  transparent 60%
+                ),
+                rgba(255, 255, 255, 0.04);
+              display: grid;
+              place-items: center;
+              font-weight: 900;
+              color: var(--kr-gold-2);
+              font-size: 20px;
+              box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+              flex: 0 0 auto;
+            "
+          >
+            {{ (_creator_username[:1] if _creator_username else
+            (_creator_name[:1] if _creator_name else 'U'))|upper }}
+          </div>
+
+          <div style="min-width: 0">
+            <div
+              style="
+                font-weight: 900;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
+              "
+            >
+              {{ _creator_name if _creator_name else (_creator_username if
+              _creator_username else 'Usuario') }} {% if _creator_verified %}
+              <span title="Verificado">✔</span>
+              {% endif %}
+            </div>
+
+            <div class="kr-text-muted" style="margin-top: 4px">
+              {{ '@' ~ _creator_username if _creator_username else 'Creador KR'
+              }}
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+          "
+        >
+          <div class="kr-mini">
+            <div class="kr-mini-label">Views</div>
+            <div class="kr-mini-value" data-stats-views="1">{{ _views0 }}</div>
+          </div>
+
+          <div class="kr-mini">
+            <div class="kr-mini-label">Likes</div>
+            <div class="kr-mini-value" data-like-count-main="1">
+              {{ _likes0 }}
+            </div>
+          </div>
+
+          <div class="kr-mini">
+            <div class="kr-mini-label">Guardados</div>
+            <div class="kr-mini-value" data-collect-count-main="1">
+              {{ _saves0 }}
+            </div>
+          </div>
+
+          <div class="kr-mini">
+            <div class="kr-mini-label">Comentarios</div>
+            <div class="kr-mini-value" data-stats-comments="1">{{ _c0 }}</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap">
+          {% if _creator_public_slug and 'public_profile_slug' in _views %}
+          <a
+            class="kr-btn kr-btn-outline"
+            href="{{ url_for('public_profile_slug', slug=_creator_public_slug) }}"
+          >
+            Ver perfil
+          </a>
+          {% elif _creator_username and 'public_profile_handle' in _views %}
+          <a
+            class="kr-btn kr-btn-outline"
+            href="{{ url_for('public_profile_handle', username=_creator_username) }}"
+          >
+            Ver perfil
+          </a>
+          {% endif %} {% if _can_follow %}
+          <button
+            class="kr-btn kr-btn-gold{% if _following %} is-following{% endif %}"
+            type="button"
+            id="krWatchFollowBtn"
+            data-follow-url="{{ _follow_url }}"
+            data-following="{{ '1' if _following else '0' }}"
+          >
+            {{ 'Siguiendo' if _following else 'Seguir' }}
+          </button>
+          {% elif _is_mine %}
+          <span class="kr-badge">Tu video</span>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="kr-card">
+        <div class="kr-card-title">⚡ Estado del video</div>
+        <div class="kr-card-label">Resumen rápido del contenido</div>
+
+        <div style="margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px">
+          <span class="kr-badge kr-badge-mini">
+            {% if video and video.visibility == 'private' %} 🔒 Privado {% elif
+            video and video.visibility == 'contacts' %} 👥 Contactos {% else %}
+            🌍 Público {% endif %}
+          </span>
+
+          {% if _liked %}
+          <span class="kr-badge kr-badge-mini">❤️ Te gusta</span>
+          {% endif %} {% if _collected %}
+          <span class="kr-badge kr-badge-mini">📚 En biblioteca</span>
+          {% endif %}
+        </div>
+
+        {% if _hashtags %}
+        <div style="margin-top: 14px">
+          <div class="kr-card-label" style="margin-bottom: 8px">Hashtags</div>
+          <div class="kr-video-card-hashtags" style="display: flex !important">
+            {% for tag in _hashtags[:6] %} {% if EP_FEED %}
+            <a
+              class="kr-video-hashtag"
+              href="{{ url_for(EP_FEED, q=tag, sort='viral') }}"
+            >
+              {{ tag }}
+            </a>
+            {% else %}
+            <span class="kr-video-hashtag">{{ tag }}</span>
+            {% endif %} {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  async function krPostJSON(url, body = null) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "same-origin",
+      body: body ? JSON.stringify(body) : null,
+    });
+
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (e) {}
+
+    return { res, data };
+  }
+
+  async function krGetJSON(url) {
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+    });
+
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (e) {}
+
+    return { res, data };
+  }
+
+  function krShowError(msg) {
+    const box = document.getElementById("krCommentError");
+    if (!box) return;
+
+    if (!msg) {
+      box.style.display = "none";
+      box.textContent = "";
+      return;
+    }
+
+    box.style.display = "block";
+    box.textContent = msg;
+  }
+
+  function krEscapeHtml(text) {
+    return (text || "")
+      .toString()
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function krRenderComments(list) {
+    const wrap = document.getElementById("krCommentList");
+    if (!wrap) return;
+
+    if (!Array.isArray(list) || !list.length) {
+      wrap.innerHTML = '<div class="kr-muted">Aún no hay comentarios.</div>';
+      return;
+    }
+
+    wrap.innerHTML = list
+      .map((c) => {
+        const uid = c.user_id ?? "-";
+        const display =
+          (c.display_name && String(c.display_name).trim()) ||
+          (c.username && String(c.username).trim()) ||
+          "Usuario #" + uid;
+
+        const username = c.username ? "@" + String(c.username).trim() : "";
+        const created = c.created_at || "";
+        const text = krEscapeHtml(c.text || "");
+
+        return `
+          <div class="kr-card" style="padding:12px; margin-top:8px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+              <div>
+                <div style="font-weight:900; color:#fff;">${krEscapeHtml(display)}</div>
+                ${username ? `<div class="kr-text-muted" style="margin-top:3px; font-size:12px;">${krEscapeHtml(username)}</div>` : ""}
+              </div>
+              <div class="kr-text-muted" style="font-size:12px;">${krEscapeHtml(created)}</div>
+            </div>
+            <div style="margin-top:8px; white-space:pre-wrap; color:#e9e9ff;">${text}</div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  function krApplyStats(stats) {
+    if (!stats) return;
+
+    const viewsEls = document.querySelectorAll("[data-stats-views='1']");
+    const commentsEls = document.querySelectorAll("[data-stats-comments='1']");
+
+    if (stats.views !== undefined) {
+      viewsEls.forEach((el) => {
+        el.textContent = String(stats.views);
+      });
+    }
+
+    if (stats.comments !== undefined) {
+      commentsEls.forEach((el) => {
+        el.textContent = String(stats.comments);
+      });
+    }
+  }
+
+  function krSetLikeCount(value) {
+    document
+      .querySelectorAll(
+        "[data-like-count-inline='1'], [data-like-count-main='1']",
+      )
+      .forEach((el) => {
+        el.textContent = String(value);
+      });
+  }
+
+  function krSetCollectCount(value) {
+    document.querySelectorAll("[data-collect-count-main='1']").forEach((el) => {
+      el.textContent = String(value);
+    });
+  }
+
+  async function krLoadComments() {
+    const url = "{{ API_COMMENTS }}";
+
+    if (!url || url.endsWith("/")) {
+      krRenderComments([]);
+      return;
+    }
+
+    const { res, data } = await krGetJSON(url + "?limit=50&offset=0");
+
+    if (!res.ok || !data.ok) {
+      krRenderComments([]);
+      return;
+    }
+
+    krRenderComments(data.comments || []);
+    krApplyStats(data.stats || {});
+  }
+
+  async function krSendComment() {
+    const ta = document.getElementById("krCommentText");
+    const btn = document.getElementById("krCommentSend");
+
+    if (!ta || !btn) return;
+
+    const text = (ta.value || "").trim();
+
+    if (!text) {
+      krShowError("Escribe un comentario.");
+      return;
+    }
+
+    if (text.length > 500) {
+      krShowError("Máximo 500 caracteres.");
+      return;
+    }
+
+    krShowError("");
+    btn.disabled = true;
+
+    const old = btn.textContent;
+    btn.textContent = "…";
+
+    try {
+      const { res, data } = await krPostJSON("{{ API_COMMENT }}", { text });
+
+      if (!res.ok || !data.ok) {
+        krShowError(data.error || "No se pudo publicar.");
+        return;
+      }
+
+      ta.value = "";
+      krApplyStats(data.stats || {});
+      await krLoadComments();
+    } finally {
+      btn.disabled = false;
+      btn.textContent = old;
+    }
+  }
+
+  async function krToggleLike() {
+    const btn = document.getElementById("krWatchLikeBtn");
+    if (!btn) return;
+
+    const iconEl = btn.querySelector("[data-like-icon='1']");
+    const oldIcon = iconEl ? iconEl.textContent : "";
+    const oldLiked = btn.dataset.liked === "1";
+    const oldCount = Number(
+      (document.querySelector("[data-like-count-inline='1']") || {})
+        .textContent || 0,
+    );
+
+    btn.disabled = true;
+
+    try {
+      const { res, data } = await krPostJSON("{{ API_LIKE }}");
+
+      if (!res.ok || !data.ok) throw new Error("like_failed");
+
+      const liked = !!data.liked;
+      const count = Number(data.likes_count || 0);
+
+      btn.dataset.liked = liked ? "1" : "0";
+      if (iconEl) iconEl.textContent = liked ? "❤️" : "🤍";
+      krSetLikeCount(count);
+    } catch (e) {
+      btn.dataset.liked = oldLiked ? "1" : "0";
+      if (iconEl) iconEl.textContent = oldIcon;
+      krSetLikeCount(oldCount);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function krToggleCollect() {
+    const btn = document.getElementById("krWatchCollectBtn");
+    if (!btn) return;
+
+    const textEl = btn.querySelector("[data-collect-text='1']");
+    const oldText = textEl ? textEl.textContent : "";
+    const oldCollected = btn.dataset.collected === "1";
+    const oldCount = Number(
+      (document.querySelector("[data-collect-count-main='1']") || {})
+        .textContent || 0,
+    );
+
+    btn.disabled = true;
+
+    try {
+      const { res, data } = await krPostJSON("{{ API_COLLECT }}");
+
+      if (!res.ok || !data.ok) throw new Error("collect_failed");
+
+      const collected = !!data.collected;
+      const count = Number(data.collections_count || 0);
+
+      btn.dataset.collected = collected ? "1" : "0";
+      if (textEl) {
+        textEl.textContent = collected ? "En biblioteca" : "Coleccionar";
+      }
+      krSetCollectCount(count);
+    } catch (e) {
+      btn.dataset.collected = oldCollected ? "1" : "0";
+      if (textEl) textEl.textContent = oldText;
+      krSetCollectCount(oldCount);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function krToggleFollow() {
+    const btn = document.getElementById("krWatchFollowBtn");
+    if (!btn) return;
+
+    const url = btn.dataset.followUrl;
+    if (!url) return;
+
+    const wasFollowing = btn.dataset.following === "1";
+    const oldText = btn.textContent;
+
+    btn.disabled = true;
+    btn.textContent = "…";
+
+    try {
+      const { res, data } = await krPostJSON(url);
+
+      if (!res.ok || !data.ok) throw new Error("follow_failed");
+
+      const isFollowing = !!data.following;
+      btn.dataset.following = isFollowing ? "1" : "0";
+      btn.textContent = isFollowing ? "Siguiendo" : "Seguir";
+      btn.classList.toggle("is-following", isFollowing);
+    } catch (e) {
+      btn.dataset.following = wasFollowing ? "1" : "0";
+      btn.textContent = oldText;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function krInitPosterPlayer() {
+    const video = document.getElementById("krWatchVideoPlayer");
+    const poster = document.getElementById("krPlayerPoster");
+    const playBtn = document.getElementById("krPlayerPosterPlay");
+
+    if (!video || !poster || poster.hidden) return;
+
+    async function playFromPoster() {
+      try {
+        await video.play();
+      } catch (e) {}
+    }
+
+    function hidePoster() {
+      poster.classList.add("is-hidden");
+    }
+
+    function showPoster() {
+      if (video.paused && (video.currentTime || 0) <= 0.08) {
+        poster.classList.remove("is-hidden");
+      }
+    }
+
+    if (playBtn) {
+      playBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        playFromPoster();
+      });
+    }
+
+    poster.addEventListener("click", (e) => {
+      if (e.target === playBtn) return;
+      playFromPoster();
+    });
+
+    video.addEventListener("play", hidePoster);
+    video.addEventListener("playing", hidePoster);
+    video.addEventListener("seeked", () => {
+      if ((video.currentTime || 0) > 0.08) hidePoster();
+    });
+    video.addEventListener("pause", () => {
+      if ((video.currentTime || 0) <= 0.08) {
+        showPoster();
+      }
+    });
+    video.addEventListener("ended", () => {
+      try {
+        video.currentTime = 0;
+      } catch (e) {}
+      showPoster();
+    });
+  }
+
+  document.addEventListener("click", (e) => {
+    const send = e.target.closest("#krCommentSend");
+    if (send) {
+      e.preventDefault();
+      krSendComment();
+      return;
+    }
+
+    const likeBtn = e.target.closest("#krWatchLikeBtn");
+    if (likeBtn) {
+      e.preventDefault();
+      krToggleLike();
+      return;
+    }
+
+    const collectBtn = e.target.closest("#krWatchCollectBtn");
+    if (collectBtn) {
+      e.preventDefault();
+      krToggleCollect();
+      return;
+    }
+
+    const followBtn = e.target.closest("#krWatchFollowBtn");
+    if (followBtn) {
+      e.preventDefault();
+      krToggleFollow();
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    krLoadComments();
+    krInitPosterPlayer();
+  });
+</script>
+
+<style>
+  .kr-player-frame {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kr-player-poster {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    background: #000;
+    transition:
+      opacity 0.24s ease,
+      visibility 0.24s ease;
+  }
+
+  .kr-player-poster[hidden] {
+    display: none !important;
+  }
+
+  .kr-player-poster.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .kr-player-poster-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    background: #000;
+    transform-origin: center center;
+    transition:
+      object-position 0.22s ease,
+      transform 0.22s ease;
+  }
+
+  .kr-player-poster::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.1),
+        rgba(0, 0, 0, 0.18) 40%,
+        rgba(0, 0, 0, 0.38)
+      ),
+      radial-gradient(
+        circle at center,
+        rgba(255, 255, 255, 0.03),
+        transparent 46%
+      );
+    pointer-events: none;
+  }
+
+  .kr-player-poster-play {
+    position: relative;
+    z-index: 4;
+    width: 84px;
+    height: 84px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.42);
+    color: #fff;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    box-shadow:
+      0 18px 40px rgba(0, 0, 0, 0.38),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    transition:
+      transform 0.18s ease,
+      background 0.18s ease,
+      box-shadow 0.22s ease;
+  }
+
+  .kr-player-poster-play:hover {
+    transform: scale(1.04);
+    background: rgba(0, 0, 0, 0.56);
+    box-shadow:
+      0 20px 42px rgba(0, 0, 0, 0.42),
+      0 0 18px rgba(247, 227, 156, 0.1);
+  }
+
+  @media (max-width: 860px) {
+    .kr-player-poster-play {
+      width: 72px;
+      height: 72px;
+      font-size: 24px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .kr-player-poster-play {
+      width: 64px;
+      height: 64px;
+      font-size: 21px;
+    }
+  }
+</style>
+{% endblock %}

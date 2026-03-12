@@ -1,0 +1,298 @@
+{# templates/core.html — KING ROLON AUTOMATIONS (GOD MODE ✅)
+   ✅ Compatible con base.html real (blocks: title, head, content, scripts)
+   ✅ Dict-safe (current_user es dict), i18n-safe, no blank
+   ✅ Core UI + Chat conectado a /api/core/message
+   ✅ UX PRO: textarea + Enter/Shift+Enter + newline rendering + anti-double-submit
+#}
+{% extends "base.html" %}
+
+{# =========================
+   i18n FALLBACK (si falta key en I18N)
+   ========================= #}
+{% macro tr(key, fallback) -%}
+  {%- set v = t(key) -%}
+  {{ v if v != key else fallback }}
+{%- endmacro %}
+
+{% block title %}{{ tr('core.title_tab','Core') }} | {{ t('app.name') }}{% endblock %}
+
+{% block content %}
+
+{# =========================
+   SAFE HELPERS
+   ========================= #}
+{% set u = current_user or {} %}
+{% set user_name = (u.get('name') if u and u.get('name') else (u.get('email') if u and u.get('email') else tr('core.user_default','KR User'))) %}
+{% set role_up = ((u.get('role') if u and u.get('role') else (u.get('plan') if u and u.get('plan') else 'FREE')) | upper) %}
+{% set core_messages = core_messages or [] %}
+
+{# =========================
+   PAGE HEADER (compat: kr-page-head + kr-pagehead)
+   ========================= #}
+<section class="kr-page-head kr-pagehead">
+  <h1 class="kr-page-title">{{ tr('core.title','Core') }}</h1>
+  <p class="kr-page-subtitle">{{ tr('core.subtitle','Núcleo IA del Reino. Comandos, memoria y chat.') }}</p>
+</section>
+
+<div class="kr-grid kr-grid-2 kr-mt-lg">
+
+  <!-- ================= LEFT ================= -->
+  <section class="kr-card kr-core-panel">
+    <div class="kr-settings-header-row">
+      <div>
+        <h2 class="kr-card-title">{{ tr('core.panel_title','Estado del Core') }}</h2>
+        <p class="kr-card-label">{{ tr('core.panel_desc','Motor activo. Responde y registra memoria.') }}</p>
+      </div>
+      <span class="kr-tag kr-tag-ok">{{ tr('core.state_ready','READY') }}</span>
+    </div>
+
+    <div id="kr-eye-wrap" class="kr-core-shell kr-eye-idle" aria-label="KR Core">
+      <div class="kr-core-ring kr-core-ring-outer" aria-hidden="true"></div>
+      <div class="kr-core-ring kr-core-ring-inner" aria-hidden="true"></div>
+      <div class="kr-core-eye" aria-hidden="true"></div>
+    </div>
+
+    <dl class="kr-settings-list kr-mt-md">
+      <dt>{{ tr('core.identity','Identidad') }}</dt>
+      <dd style="font-weight:900;">{{ user_name|e }}</dd>
+
+      <dt>{{ tr('core.plan','Plan') }}</dt>
+      <dd style="font-weight:900;">{{ role_up|e }}</dd>
+    </dl>
+
+    <div class="kr-core-note">
+      {{ tr('core.note_local','Privado: tus mensajes se procesan dentro del sistema y pueden guardarse como memoria.') }}
+    </div>
+  </section>
+
+  <!-- ================= RIGHT ================= -->
+  <section class="kr-card kr-core-chat">
+    <div class="kr-settings-header-row">
+      <div>
+        <h2 class="kr-card-title">{{ tr('core.chat_title','Chat del Core') }}</h2>
+        <p class="kr-card-label">{{ tr('core.chat_desc','Escribe comandos o preguntas. El Core responde y registra.') }}</p>
+      </div>
+      <span class="kr-tag">{{ tr('core.chip_private','PRIVATE') }}</span>
+    </div>
+
+    <div
+      id="kr-chat-body"
+      class="kr-core-chat-body"
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions text"
+      aria-atomic="false"
+    >
+      <!-- mensaje inicial -->
+      <div class="kr-core-msg kr-core-msg-ai">
+        <div class="kr-core-msg-label">{{ tr('core.kr_label','KR') }}</div>
+        <div class="kr-core-msg-bubble">
+          {{ tr('core.welcome','Bienvenido, {user}. Estoy listo.')|replace('{user}', user_name)|e }}
+        </div>
+      </div>
+
+      {% if core_messages and core_messages|length %}
+        {% for m in core_messages %}
+          {% if m is mapping %}
+            {% set who = (m.get('role') or 'ai')|lower %}
+            {% set text = (m.get('text') or '') %}
+            <div class="kr-core-msg {% if who=='user' %}kr-core-msg-user{% else %}kr-core-msg-ai{% endif %}">
+              <div class="kr-core-msg-label">
+                {% if who=='user' %}{{ tr('core.you_label','Tú') }}{% else %}{{ tr('core.kr_label','KR') }}{% endif %}
+              </div>
+
+              {# ✅ GOD FIX: respeta saltos de línea del historial, SIN XSS #}
+              <div class="kr-core-msg-bubble">{{ (text|e)|replace('\n','<br>')|safe }}</div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="kr-core-msg kr-core-msg-ai kr-core-msg-example">
+          <div class="kr-core-msg-label">{{ tr('core.example_label','Ejemplo') }}</div>
+          <div class="kr-core-msg-bubble">{{ tr('core.example_text','Prueba: “estado del scheduler” o “muéstrame logs”.')|e }}</div>
+        </div>
+      {% endif %}
+    </div>
+
+    <form id="kr-core-form" class="kr-core-chat-form" autocomplete="off">
+      <textarea
+        id="kr-core-input"
+        class="kr-input"
+        rows="2"
+        maxlength="900"
+        placeholder="{{ tr('core.input_ph','Escribe un comando...') }}"
+        aria-label="{{ tr('core.input_ph','Escribe un comando...') }}"
+        style="resize:none; line-height:1.35; overflow:hidden;"
+      ></textarea>
+      <button id="kr-core-send" type="submit" class="kr-btn kr-btn-gold" disabled>
+        {{ tr('core.send_btn','Enviar') }}
+      </button>
+    </form>
+
+    <div class="kr-core-chat-footer">
+      <span>• {{ tr('core.hint_1','Tip: “logs” para ver actividad') }}</span>
+      <span>• {{ tr('core.hint_2','Tip: “tareas” para resumen') }}</span>
+      <span>• {{ tr('core.hint_3','Tip: “scheduler” para estado') }}</span>
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+(function () {
+  const API_SEND = "/api/core/message";
+
+  const eye = document.getElementById("kr-eye-wrap");
+  const form = document.getElementById("kr-core-form");
+  const input = document.getElementById("kr-core-input");
+  const body  = document.getElementById("kr-chat-body");
+  const btn   = document.getElementById("kr-core-send");
+
+  let isSending = false;
+
+  function setEye(state){
+    if(!eye) return;
+    eye.classList.remove("kr-eye-idle","kr-eye-thinking","kr-eye-speaking");
+    eye.classList.add(state);
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function toSafeHtmlWithBreaks(text){
+    return escapeHtml(text).replaceAll("\n","<br>");
+  }
+
+  function isNearBottom(el){
+    if(!el) return true;
+    const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
+    return gap < 120;
+  }
+
+  function scrollBottomIfNeeded(force){
+    if(!body) return;
+    if(force || isNearBottom(body)) body.scrollTop = body.scrollHeight;
+  }
+
+  function setBusy(isBusy){
+    if(!body) return;
+    body.setAttribute("aria-busy", isBusy ? "true" : "false");
+  }
+
+  function setSendEnabled(){
+    if(!btn || !input) return;
+    const hasText = (input.value || "").trim().length > 0;
+    btn.disabled = !hasText || isSending;
+  }
+
+  function autoGrow(){
+    if(!input) return;
+    input.style.height = "auto";
+    const max = 140; // px (limite suave)
+    input.style.height = Math.min(input.scrollHeight, max) + "px";
+  }
+
+  function addMsg(role, text){
+    if(!body) return;
+    const near = isNearBottom(body);
+
+    const w = document.createElement("div");
+    w.className = "kr-core-msg " + (role==="user" ? "kr-core-msg-user":"kr-core-msg-ai");
+    w.innerHTML = `
+      <div class="kr-core-msg-label">${role==="user" ? "{{ tr('core.you_label','Tú') }}" : "{{ tr('core.kr_label','KR') }}"}</div>
+      <div class="kr-core-msg-bubble">${toSafeHtmlWithBreaks(text)}</div>
+    `;
+    body.appendChild(w);
+    scrollBottomIfNeeded(near);
+  }
+
+  async function sendMessage(txt){
+    const r = await fetch(API_SEND,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      credentials:"same-origin",
+      body:JSON.stringify({ message: txt })
+    });
+
+    const j = await r.json().catch(()=> ({}));
+    if(!r.ok || !j.ok){
+      throw new Error(j.error || j.message || "fail");
+    }
+    return j.reply || "OK";
+  }
+
+  // Enter envía, Shift+Enter nueva línea (UX PRO real)
+  if(input){
+    input.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" && !e.shiftKey){
+        e.preventDefault();
+        if(form && typeof form.requestSubmit === "function") form.requestSubmit();
+      }
+    });
+
+    input.addEventListener("input", () => {
+      setSendEnabled();
+      autoGrow();
+    });
+
+    setSendEnabled();
+    autoGrow();
+  }
+
+  if(form){
+    form.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      if(!input) return;
+
+      const txt = (input.value || "").trim();
+      if(!txt){
+        addMsg("ai","{{ tr('core.err_empty','Escribe un mensaje.') }}");
+        return;
+      }
+
+      if(isSending) return;
+
+      isSending = true;
+      setSendEnabled();
+
+      addMsg("user", txt);
+      input.value = "";
+      autoGrow();
+      setSendEnabled();
+
+      setEye("kr-eye-thinking");
+      setBusy(true);
+
+      try{
+        const reply = await sendMessage(txt);
+        addMsg("ai", reply);
+        setEye("kr-eye-speaking");
+        setTimeout(()=>setEye("kr-eye-idle"), 420);
+      }catch(err){
+        console.error(err);
+        addMsg("ai","{{ t('common.err_connection') }}");
+        setEye("kr-eye-idle");
+      }finally{
+        setBusy(false);
+        isSending = false;
+        setSendEnabled();
+        input.focus();
+      }
+    });
+  }
+
+  setEye("kr-eye-idle");
+  scrollBottomIfNeeded(true);
+})();
+</script>
+{% endblock %}

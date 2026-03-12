@@ -1,159 +1,719 @@
-{% extends "base.html" %}
-{% block content %}
+{# templates/dashboard.html — KING ROLON AUTOMATIONS (MILLION € MODE + PRO
+CONTROLS ✅) ✅ i18n SAFE + dict-safe + NO BLANK ✅ KPI % + flechas ✅ Tabla TOP
+tareas (ranking) ✅ Toggle Scheduler (frontend robusto) ✅ POLISHED PREMIUM UI
+#} {% extends "base.html" %} {% macro tr(key, fallback) -%} {%- set v = t(key)
+-%} {{ v if v != key else fallback }} {%- endmacro %} {% set u = current_user or
+{} %} {% set user_name = (u.get('name') if u and u.get('name') else
+(u.get('email') if u and u.get('email') else tr('dashboard.user_default','KR
+User'))) %} {% set plan = ((u.get('role') if u and u.get('role') else
+(u.get('plan') if u and u.get('plan') else "FREE")) | upper) %} {% set tareas =
+tareas or [] %} {% set tareas_activas = tareas_activas or [] %} {% set
+plataformas = plataformas or [] %} {% set ultimos_logs = ultimos_logs or [] %}
+{% set st = scheduler_status or {} %} {% set st_running = (st.get('running') if
+st is mapping else False) %} {% set last_run = (st.get('last_run_at') if st is
+mapping else None) or "—" %} {% set cycles = (st.get('cycles_executed') if st is
+mapping else 0) or 0 %} {% set errors = (st.get('consecutive_errors') if st is
+mapping else 0) or 0 %} {% set ingresos = ingresos_mensuales if
+ingresos_mensuales is not none else 0 %} {% set chart_labels = chart_labels or
+[] %} {% set chart_values = chart_values or [] %} {% set total_tasks =
+tareas|length %} {% set active_tasks = tareas_activas|length %} {% set
+platforms_count = plataformas|length %} {% set health = 100 %} {% if not
+st_running %}{% set health = 55 %}{% endif %} {% if errors|int > 0 %}{% set
+health = 40 %}{% endif %} {% if errors|int >= 3 %}{% set health = 25 %}{% endif
+%} {% set delta_abs = 0 %} {% set delta_pct = 0 %} {% if chart_values and
+chart_values|length >= 2 %} {% set v0 = (chart_values[0]|float) %} {% set v1 =
+(chart_values[chart_values|length - 1]|float) %} {% set delta_abs = (v1 - v0) %}
+{% if v0 != 0 %} {% set delta_pct = ((delta_abs / v0) * 100) %} {% else %} {%
+set delta_pct = (100 if delta_abs > 0 else 0) %} {% endif %} {% endif %} {% set
+tasks_pct = 0 %} {% if total_tasks > 0 %} {% set tasks_pct = ((active_tasks /
+total_tasks) * 100) %} {% endif %} {% set ns_rank = namespace(items=[]) %} {%
+for tsk in tareas %} {% if tsk is mapping %} {% set ns_rank.items =
+ns_rank.items + [tsk] %} {% endif %} {% endfor %} {% block title %}{{
+tr('dashboard.title_tab','Dashboard') }} | {{ tr('app.name','KING ROLON
+AUTOMATIONS') }}{% endblock %} {% block page_title %}{{
+tr('dashboard.title','Dashboard') }}{% endblock %} {% block page_subtitle %} {{
+tr('dashboard.subtitle','Control total del Reino: {user} — Plan
+{plan}.')|replace('{user}', user_name)|replace('{plan}', plan) }} {% endblock %}
+{% block app_content %}
 
-<div class="kr-grid kr-grid-3">
-  <!-- Ingresos -->
-  <div class="kr-card">
-    <div class="kr-card-title">Ingresos estimados (mensual)</div>
-    <div class="kr-card-number">€ {{ ingresos_mensuales }}</div>
-    <div class="kr-card-label">Simulación basada en tu actividad actual</div>
-  </div>
+<div class="kr-dashboard-page">
+  <section class="kr-hero kr-dashboard-hero kr-mt-lg">
+    <div class="kr-hero-left kr-dashboard-hero-left">
+      <div class="kr-hero-kicker">
+        👑 {{ tr('dashboard.hero_kicker','KING ROLON CONTROL CENTER') }}
+      </div>
+      <h1 class="kr-hero-title kr-dashboard-hero-title">
+        {{ tr('dashboard.hero_title','Dashboard de millones') }}
+      </h1>
+      <p class="kr-hero-sub kr-dashboard-hero-sub">
+        {{ tr('dashboard.hero_sub','KPIs, automatizaciones, control del
+        scheduler y decisiones rápidas estilo CEO.') }}
+      </p>
 
-  <!-- Tareas -->
-  <div class="kr-card">
-    <div class="kr-card-title">Tareas automáticas activas</div>
-    <div class="kr-card-number">{{ tareas_activas|length }}</div>
-    <div class="kr-card-label">Publicaciones, recortes y respuestas</div>
-  </div>
+      <div class="kr-hero-actions kr-dashboard-hero-actions kr-mt-md">
+        <a
+          class="kr-btn kr-btn-gold kr-btn-lg"
+          href="{{ url_for('automatizaciones') }}"
+        >
+          ⚡ {{ tr('dashboard.go_tasks','Automatizaciones') }}
+        </a>
+        <a class="kr-btn kr-btn-outline kr-btn-lg" href="{{ url_for('core') }}">
+          👁️ {{ tr('dashboard.open_core','Abrir Core') }}
+        </a>
+      </div>
 
-  <!-- Plataformas -->
-  <div class="kr-card">
-    <div class="kr-card-title">Plataformas conectadas</div>
-    <div class="kr-card-number">{{ plataformas|length }}</div>
-    <div class="kr-card-label">
-      {% for p in plataformas %}
-        {{ p.nombre }}{% if not loop.last %} · {% endif %}
-      {% endfor %}
-    </div>
-  </div>
-</div>
+      <div class="kr-hero-meta kr-dashboard-hero-meta kr-mt-md">
+        <span class="kr-chip">👤 {{ user_name }}</span>
+        <span class="kr-chip"
+          >💠 {{ tr('dashboard.plan','Plan') }}: {{ plan }}</span
+        >
 
-<div class="kr-grid kr-grid-2 kr-mt-lg">
-  <!-- Estado de conexiones -->
-  <div class="kr-card">
-    <div class="kr-card-title">Estado de conexiones</div>
-    <ul class="kr-list kr-mt-lg">
-      {% for p in plataformas %}
-      <li>
-        <span>{{ p.nombre }}</span>
-        {% if p.estado == "Conectado" %}
-          <span class="kr-tag kr-tag-ok">Conectado</span>
-        {% elif p.estado == "Pendiente" %}
-          <span class="kr-tag kr-tag-pending">Pendiente</span>
+        {% if st_running %}
+        <span id="kr-chip-scheduler" class="kr-chip kr-chip-ok" data-running="1"
+          >● {{ tr('dashboard.system_on','Scheduler ON') }}</span
+        >
         {% else %}
-          <span class="kr-tag kr-tag-off">No conectado</span>
+        <span
+          id="kr-chip-scheduler"
+          class="kr-chip kr-chip-off"
+          data-running="0"
+          >● {{ tr('dashboard.system_off','Scheduler OFF') }}</span
+        >
         {% endif %}
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
+      </div>
+    </div>
 
-  <!-- Logs recientes -->
-  <div class="kr-card">
-    <div class="kr-card-title">Actividad reciente (logs)</div>
-    <ul class="kr-list kr-mt-lg" id="kr-logs">
-      {% for ln in ultimos_logs %}
-        <li><span>{{ ln }}</span></li>
-      {% endfor %}
-    </ul>
-  </div>
+    <div class="kr-hero-right kr-dashboard-hero-right">
+      <div class="kr-hero-panel kr-dashboard-hero-panel">
+        <div class="kr-hero-panel-title">
+          {{ tr('dashboard.system_health','Salud del sistema') }}
+        </div>
+
+        <div class="kr-health">
+          <div class="kr-health-bar">
+            <div class="kr-health-fill" style="width: {{ health }}%;"></div>
+          </div>
+          <div class="kr-health-meta">
+            <span
+              >{{ tr('dashboard.last_run','Última ejecución') }}:
+              <b id="kr-last-run">{{ last_run }}</b></span
+            >
+            <span
+              >{{ tr('dashboard.errors','Errores') }}:
+              <b id="kr-errors">{{ errors }}</b></span
+            >
+          </div>
+        </div>
+
+        <div class="kr-dashboard-mini-grid kr-mt-md">
+          <div class="kr-mini">
+            <div class="kr-mini-label">
+              {{ tr('dashboard.cycles','Ciclos') }}
+            </div>
+            <div class="kr-mini-value" id="kr-cycles">{{ cycles }}</div>
+          </div>
+          <div class="kr-mini">
+            <div class="kr-mini-label">
+              {{ tr('dashboard.platforms','Plataformas') }}
+            </div>
+            <div class="kr-mini-value">{{ platforms_count }}</div>
+          </div>
+          <div class="kr-mini">
+            <div class="kr-mini-label">
+              {{ tr('dashboard.active_tasks','Activas') }}
+            </div>
+            <div class="kr-mini-value" id="kr-active-tasks">
+              {{ active_tasks }}
+            </div>
+          </div>
+        </div>
+
+        <div class="kr-mt-md kr-row-between kr-dashboard-scheduler-row">
+          <div>
+            <div class="kr-mini-label" style="margin-bottom: 4px">
+              {{ tr('dashboard.scheduler_control','Control del Scheduler') }}
+            </div>
+            <div class="kr-text-muted" style="font-size: 11px">
+              {{ tr('dashboard.scheduler_control_sub','Enciende/apaga el motor
+              sin salir del Dashboard.') }}
+            </div>
+          </div>
+
+          <button
+            id="kr-scheduler-toggle"
+            class="kr-btn kr-btn-gold kr-btn-xs"
+            type="button"
+            aria-live="polite"
+          >
+            {% if st_running %}{{ tr('dashboard.turn_off','Apagar') }}{% else
+            %}{{ tr('dashboard.turn_on','Encender') }}{% endif %}
+          </button>
+        </div>
+
+        <div
+          id="kr-scheduler-msg"
+          class="kr-text-muted"
+          style="margin-top: 8px; font-size: 11px; display: none"
+        ></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="kr-grid kr-grid-4 kr-mt-lg">
+    <div class="kr-kpi kr-card kr-dashboard-kpi">
+      <div class="kr-kpi-top">
+        <div class="kr-kpi-label">
+          {{ tr('dashboard.kpi_mrr','MRR estimado') }}
+        </div>
+        <span class="kr-tag kr-tag-pending"
+          >{{ tr('dashboard.sim','SIM') }}</span
+        >
+      </div>
+      <div class="kr-kpi-value">€ {{ ingresos }}</div>
+      <div class="kr-kpi-sub">
+        {{ tr('dashboard.kpi_mrr_hint','Ingresos mensuales recurrentes (MVP).')
+        }}
+      </div>
+    </div>
+
+    <div class="kr-kpi kr-card kr-dashboard-kpi">
+      <div class="kr-kpi-top">
+        <div class="kr-kpi-label">{{ tr('dashboard.kpi_tasks','Tareas') }}</div>
+        <span class="kr-tag">{{ total_tasks }}</span>
+      </div>
+
+      <div class="kr-kpi-value">{{ total_tasks }}</div>
+
+      {% set tasks_dir = 'up' if tasks_pct|float >= 60 else 'flat' %}
+      <div class="kr-kpi-micro">
+        <span class="kr-delta kr-delta-{{ tasks_dir }}">
+          {% if tasks_dir=='up' %}▲{% elif tasks_dir=='flat' %}●{% else %}▼{%
+          endif %} {{ (tasks_pct|round(0))|int }}%
+        </span>
+        <span class="kr-kpi-micro-sub"
+          >{{ tr('dashboard.kpi_tasks_micro','Activas / Total') }}</span
+        >
+      </div>
+
+      <div class="kr-kpi-sub">
+        {{ tr('dashboard.kpi_tasks_hint','Total configuradas en el Reino.') }}
+      </div>
+    </div>
+
+    <div class="kr-kpi kr-card kr-dashboard-kpi">
+      <div class="kr-kpi-top">
+        <div class="kr-kpi-label">
+          {{ tr('dashboard.kpi_active','Activas') }}
+        </div>
+        {% if st_running %}
+        <span class="kr-tag kr-tag-ok">ON</span>
+        {% else %}
+        <span class="kr-tag kr-tag-off">OFF</span>
+        {% endif %}
+      </div>
+
+      <div class="kr-kpi-value">{{ active_tasks }}</div>
+
+      <div class="kr-kpi-micro">
+        <span
+          class="kr-delta kr-delta-{{ 'ok' if (errors|int)==0 else 'bad' }}"
+        >
+          {% if (errors|int)==0 %}✔{% else %}⚠{% endif %} {{
+          tr('dashboard.kpi_errors','Errores') }}: {{ errors }}
+        </span>
+        <span class="kr-kpi-micro-sub"
+          >{{ tr('dashboard.kpi_active_micro','Estabilidad del motor') }}</span
+        >
+      </div>
+
+      <div class="kr-kpi-sub">
+        {{ tr('dashboard.kpi_active_hint','Automatizaciones corriendo ahora.')
+        }}
+      </div>
+    </div>
+
+    <div class="kr-kpi kr-card kr-dashboard-kpi">
+      <div class="kr-kpi-top">
+        <div class="kr-kpi-label">
+          {{ tr('dashboard.kpi_growth','Crecimiento') }}
+        </div>
+        <span class="kr-tag"
+          >{{ tr('dashboard.kpi_growth_chip','LOCAL') }}</span
+        >
+      </div>
+
+      <div class="kr-kpi-value">
+        {% if delta_abs >= 0 %}+{% endif %}{{ (delta_abs|round(0))|int }}
+      </div>
+
+      {% set dir = 'up' if delta_pct|float > 1 else ('down' if delta_pct|float <
+      -1 else 'flat') %}
+      <div class="kr-kpi-micro">
+        <span class="kr-delta kr-delta-{{ dir }}">
+          {% if dir=='up' %}▲{% elif dir=='flat' %}●{% else %}▼{% endif %} {{
+          (delta_pct|round(1)) }}%
+        </span>
+        <span class="kr-kpi-micro-sub"
+          >{{ tr('dashboard.kpi_growth_micro','vs inicio del periodo') }}</span
+        >
+      </div>
+
+      <div class="kr-kpi-sub">
+        {{ tr('dashboard.kpi_growth_hint','Variación del gráfico local.') }}
+      </div>
+    </div>
+  </section>
+
+  <section class="kr-card kr-mt-lg">
+    <div class="kr-settings-header-row">
+      <div>
+        <h2 class="kr-card-title">
+          🏆 {{ tr('dashboard.top_tasks','Top tareas') }}
+        </h2>
+        <p class="kr-card-label">
+          {{ tr('dashboard.top_tasks_sub','Ranking operativo: lo que más impacta
+          tu sistema.') }}
+        </p>
+      </div>
+      <a
+        class="kr-btn kr-btn-outline kr-btn-xs"
+        href="{{ url_for('automatizaciones') }}"
+        >{{ tr('dashboard.manage','Gestionar') }}</a
+      >
+    </div>
+
+    {% if tareas and tareas|length %}
+    <div class="kr-table-wrap kr-mt-lg">
+      <table class="kr-table kr-table-pro kr-dashboard-table">
+        <thead>
+          <tr>
+            <th style="width: 60px">#</th>
+            <th>{{ tr('tasks.modal_name_label','Nombre') }}</th>
+            <th style="width: 160px">
+              {{ tr('tasks.platform','Plataforma') }}
+            </th>
+            <th style="width: 160px">
+              {{ tr('tasks.modal_frequency_label','Frecuencia') }}
+            </th>
+            <th style="width: 120px">{{ tr('tasks.status','Estado') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set ns = namespace(idx=0) %} {% for tsk in tareas %} {% if tsk is
+          mapping and tsk.get('activa') %} {% set ns.idx = ns.idx + 1 %} {% if
+          ns.idx <= 6 %} {% set nombre = (tsk.get('nombre') or '—') %} {% set
+          plataforma = (tsk.get('plataforma') or tr('tasks.unspecified','Sin
+          especificar')) %} {% set frecuencia = (tsk.get('frecuencia') or
+          tr('tasks.no_frequency','Sin frecuencia')) %}
+          <tr>
+            <td><span class="kr-rank">#{{ ns.idx }}</span></td>
+            <td>
+              <div class="kr-td-title">{{ nombre }}</div>
+              <div class="kr-td-sub">
+                {{ tr('dashboard.impact','Impacto') }}:
+                <b class="kr-impact">{{ tr('dashboard.high','ALTO') }}</b>
+              </div>
+            </td>
+            <td>{{ plataforma }}</td>
+            <td>{{ frecuencia }}</td>
+            <td>
+              <span class="kr-tag kr-tag-ok"
+                >{{ tr('tasks.status_active','Activa') }}</span
+              >
+            </td>
+          </tr>
+          {% endif %} {% endif %} {% endfor %} {% if ns.idx < 6 %} {% for tsk in
+          tareas %} {% if tsk is mapping and not tsk.get('activa') %} {% set
+          ns.idx = ns.idx + 1 %} {% if ns.idx <= 6 %} {% set nombre =
+          (tsk.get('nombre') or '—') %} {% set plataforma =
+          (tsk.get('plataforma') or tr('tasks.unspecified','Sin especificar'))
+          %} {% set frecuencia = (tsk.get('frecuencia') or
+          tr('tasks.no_frequency','Sin frecuencia')) %}
+          <tr>
+            <td><span class="kr-rank">#{{ ns.idx }}</span></td>
+            <td>
+              <div class="kr-td-title">{{ nombre }}</div>
+              <div class="kr-td-sub">
+                {{ tr('dashboard.impact','Impacto') }}:
+                <b class="kr-impact kr-impact-mid"
+                  >{{ tr('dashboard.medium','MEDIO') }}</b
+                >
+              </div>
+            </td>
+            <td>{{ plataforma }}</td>
+            <td>{{ frecuencia }}</td>
+            <td>
+              <span class="kr-tag kr-tag-off"
+                >{{ tr('tasks.status_paused','Pausada') }}</span
+              >
+            </td>
+          </tr>
+          {% endif %} {% endif %} {% endfor %} {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="kr-text-muted" style="margin-top: 10px; font-size: 11px">
+      {{ tr('dashboard.top_tasks_tip','Tip: mantén 3–7 tareas activas para ritmo
+      constante + datos para el Core.') }}
+    </div>
+
+    {% else %}
+    <div class="kr-empty kr-mt-lg">
+      {{ tr('dashboard.top_tasks_empty','Aún no hay tareas. Crea
+      automatizaciones para ver tu ranking aquí.') }}
+      <div class="kr-mt-md">
+        <a
+          class="kr-btn kr-btn-gold kr-btn-xs"
+          href="{{ url_for('automatizaciones') }}"
+          >{{ tr('tasks.new_task_btn','Nueva tarea') }}</a
+        >
+      </div>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="kr-grid kr-grid-3 kr-mt-lg">
+    <div class="kr-card">
+      <div class="kr-settings-header-row">
+        <div>
+          <h2 class="kr-card-title">
+            {{ tr('dashboard.activity','Actividad') }}
+          </h2>
+          <p class="kr-card-label">
+            {{ tr('dashboard.activity_hint','Gráfico local (MVP)') }}
+          </p>
+        </div>
+        {% if chart_labels and chart_values %}
+        <span class="kr-tag kr-tag-ok">LIVE</span>
+        {% else %}
+        <span class="kr-tag kr-tag-pending"
+          >{{ tr('dashboard.activity_empty','SIN DATOS') }}</span
+        >
+        {% endif %}
+      </div>
+
+      {% if chart_labels and chart_values %}
+      <div class="kr-mt-md kr-dashboard-chart-wrap" style="height: 220px">
+        <canvas id="kr-activity-chart"></canvas>
+      </div>
+      <div class="kr-mt-sm kr-text-muted" style="font-size: 11px">
+        {{ tr('dashboard.activity_note_pro','Más tareas activas = más eventos =
+        más inteligencia.') }}
+      </div>
+      {% else %}
+      <div class="kr-empty kr-mt-md">
+        <div style="font-weight: 800; margin-bottom: 6px">
+          {{ tr('dashboard.activity_note','Cuando haya ejecuciones, mostraremos
+          la actividad aquí.') }}
+        </div>
+        <div style="font-size: 11px">
+          {{ tr('dashboard.activity_note2','Crea una tarea o usa Core para
+          generar eventos.') }}
+        </div>
+        <div class="kr-mt-md">
+          <a
+            href="{{ url_for('core') }}"
+            class="kr-btn kr-btn-outline kr-btn-xs"
+            >{{ tr('dashboard.open_core','Abrir Core') }}</a
+          >
+          <a
+            href="{{ url_for('automatizaciones') }}"
+            class="kr-btn kr-btn-gold kr-btn-xs"
+            style="margin-left: 8px"
+            >{{ tr('tasks.title','Automatizaciones') }}</a
+          >
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="kr-card">
+      <div class="kr-settings-header-row">
+        <div>
+          <h2 class="kr-card-title">
+            🧠 {{ tr('dashboard.insights','Insights') }}
+          </h2>
+          <p class="kr-card-label">
+            {{ tr('dashboard.insights_hint','Decisiones rápidas, estilo CEO.')
+            }}
+          </p>
+        </div>
+        <span class="kr-tag">{{ tr('dashboard.insights_chip','PRO') }}</span>
+      </div>
+
+      <ul class="kr-list kr-mt-lg">
+        <li>
+          <div class="kr-td-title">
+            {{ tr('dashboard.ins_1_title','Siguiente paso') }}
+          </div>
+          <div class="kr-text-muted" style="font-size: 12px; margin-top: 4px">
+            {{ tr('dashboard.ins_1','Activa el scheduler y sube 3
+            automatizaciones “diarias” para crear ritmo.') }}
+          </div>
+        </li>
+        <li>
+          <div class="kr-td-title">
+            {{ tr('dashboard.ins_2_title','Monetización') }}
+          </div>
+          <div class="kr-text-muted" style="font-size: 12px; margin-top: 4px">
+            {{ tr('dashboard.ins_2','Publica 1 módulo en Marketplace y conéctalo
+            a ventas/suscripción.') }}
+          </div>
+        </li>
+        <li>
+          <div class="kr-td-title">
+            {{ tr('dashboard.ins_3_title','Eficiencia') }}
+          </div>
+          <div class="kr-text-muted" style="font-size: 12px; margin-top: 4px">
+            {{ tr('dashboard.ins_3','Reduce errores consecutivos a 0: logs
+            claros + reintentos controlados.') }}
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="kr-card">
+      <div class="kr-settings-header-row">
+        <div>
+          <h2 class="kr-card-title">
+            {{ tr('dashboard.logs','Logs recientes') }}
+          </h2>
+          <p class="kr-card-label">
+            {{ tr('dashboard.logs_hint','Actividad del sistema') }}
+          </p>
+        </div>
+        <span class="kr-tag"
+          >{{ (ultimos_logs|length) if ultimos_logs else 0 }}</span
+        >
+      </div>
+
+      {% if ultimos_logs %}
+      <div class="kr-logs kr-mt-lg">
+        {% for ln in ultimos_logs[:12] %}
+        <div class="kr-logline">{{ ln }}</div>
+        {% endfor %}
+      </div>
+      <div class="kr-text-muted" style="margin-top: 10px; font-size: 11px">
+        {{ tr('dashboard.logs_tip','Tip: logs en /logs/activity.log') }}
+      </div>
+      {% else %}
+      <div class="kr-empty kr-mt-lg">
+        — {{ tr('dashboard.logs_empty','Aún no hay actividad registrada.') }}
+      </div>
+      {% endif %}
+    </div>
+  </section>
 </div>
 
-<!-- ================= Modal Nueva Tarea ================= -->
-<style>
-  .kr-modal-overlay{
-    position:fixed;inset:0;background:rgba(0,0,0,.55);
-    display:none;align-items:center;justify-content:center;z-index:50
-  }
-  .kr-modal{
-    width:min(520px,92vw);border-radius:18px;padding:22px;
-    background:radial-gradient(circle at top left,#171320 0,#07060c 60%);
-    border:1px solid rgba(255,255,255,.06);color:#f3f3f3
-  }
-  .kr-modal h3{font-size:18px;margin-bottom:14px}
-  .kr-field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-  .kr-input,.kr-select{
-    background:#0f0f16;border:1px solid rgba(255,255,255,.12);
-    border-radius:12px;color:#fff;padding:12px
-  }
-  .kr-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
-  .kr-btn-xs{padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#1b1b23;color:#fff;cursor:pointer}
-  .kr-btn-primary{background:linear-gradient(90deg,#e0b15b,#f7e39c);color:#050509;border:none;font-weight:600}
-</style>
+{% endblock %} {% block extra_scripts %} {% if chart_labels and chart_values %}
+<script>
+  (function () {
+    const canvas = document.getElementById("kr-activity-chart");
+    if (!canvas) return;
 
-<div class="kr-modal-overlay" id="kr-modal-overlay">
-  <div class="kr-modal">
-    <h3>➕ Nueva automatización</h3>
+    const labels = {{ (chart_labels or []) | tojson }};
+    const values = {{ (chart_values or []) | tojson }};
+    if (!Array.isArray(labels) || !Array.isArray(values) || labels.length === 0) return;
 
-    <div class="kr-field">
-      <label>Nombre de la tarea</label>
-      <input id="kr-nombre" class="kr-input" placeholder="Ej: Subir clip diario a TikTok" />
-    </div>
+    function cssVar(name, fallback) {
+      try {
+        const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return v || fallback;
+      } catch(e) { return fallback; }
+    }
 
-    <div class="kr-field">
-      <label>Plataforma</label>
-      <select id="kr-plataforma" class="kr-select">
-        <option>TikTok</option>
-        <option>Facebook</option>
-        <option>YouTube</option>
-        <option>Twitch</option>
-        <option>Global</option>
-      </select>
-    </div>
+    const GOLD = cssVar("--kr-gold-2", "#f7e39c");
+    const GRID = "rgba(255,255,255,0.06)";
+    const TEXT = "#cfd0e8";
 
-    <div class="kr-field">
-      <label>Frecuencia</label>
-      <input id="kr-frecuencia" class="kr-input" placeholder="Cada 24h / Después de cada stream" />
-    </div>
+    function draw() {
+      const parent = canvas.parentElement;
+      if (!parent) return;
 
-    <div class="kr-actions">
-      <button class="kr-btn-xs" id="kr-cancelar">Cancelar</button>
-      <button class="kr-btn-xs kr-btn-primary" id="kr-guardar">Guardar</button>
-    </div>
-  </div>
-</div>
+      const dpr = window.devicePixelRatio || 1;
+      const w = Math.max(10, parent.clientWidth);
+      const h = Math.max(10, parent.clientHeight || 220);
+
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      ctx.clearRect(0, 0, w, h);
+
+      const padL = 34, padR = 12, padT = 10, padB = 26;
+      const plotW = w - padL - padR;
+      const plotH = h - padT - padB;
+
+      const nums = values.map(v => Number(v) || 0);
+      const maxVal = Math.max(1, ...nums);
+      const minVal = 0;
+
+      const xAt = (i) => padL + (nums.length === 1 ? plotW/2 : (i * (plotW / (nums.length - 1))));
+      const yAt = (v) => padT + plotH - ((v - minVal) / (maxVal - minVal)) * plotH;
+
+      ctx.strokeStyle = GRID;
+      ctx.lineWidth = 1;
+      const gridLines = 4;
+      for (let i = 0; i <= gridLines; i++) {
+        const y = padT + (plotH * i / gridLines);
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(w - padR, y);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = TEXT;
+      ctx.font = "11px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(maxVal), padL - 6, padT + 2);
+      ctx.fillText("0", padL - 6, padT + plotH);
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      if (labels.length >= 1) ctx.fillText(String(labels[0]), xAt(0), padT + plotH + 6);
+      if (labels.length >= 2) ctx.fillText(String(labels[labels.length - 1]), xAt(labels.length - 1), padT + plotH + 6);
+
+      ctx.beginPath();
+      nums.forEach((v, i) => {
+        const x = xAt(i);
+        const y = yAt(v);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      ctx.save();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = GOLD;
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.lineTo(xAt(nums.length - 1), padT + plotH);
+      ctx.lineTo(xAt(0), padT + plotH);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(247, 227, 156, 0.18)";
+      ctx.fill();
+      ctx.restore();
+
+      nums.forEach((v, i) => {
+        const x = xAt(i);
+        const y = yAt(v);
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = GOLD;
+        ctx.fill();
+        ctx.strokeStyle = "#050509";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+    }
+
+    draw();
+    window.addEventListener("resize", () => {
+      clearTimeout(window.__krChartResize);
+      window.__krChartResize = setTimeout(draw, 60);
+    });
+  })();
+</script>
+{% endif %}
 
 <script>
-  // ----- Abrir/cerrar modal -----
-  const openBtn = document.getElementById("kr-open-modal");
-  const overlay = document.getElementById("kr-modal-overlay");
-  const cancelar = document.getElementById("kr-cancelar");
-  const guardar = document.getElementById("kr-guardar");
+  (function () {
+    const btn = document.getElementById("kr-scheduler-toggle");
+    const chip = document.getElementById("kr-chip-scheduler");
+    const msg = document.getElementById("kr-scheduler-msg");
 
-  if (openBtn) openBtn.addEventListener("click", () => overlay.style.display = "flex");
-  if (cancelar) cancelar.addEventListener("click", () => overlay.style.display = "none");
-  overlay?.addEventListener("click", (e) => {
-    if (e.target === overlay) overlay.style.display = "none";
-  });
-
-  // ----- Crear tarea (POST /api/tasks) -----
-  async function crearTarea() {
-    const nombre = (document.getElementById("kr-nombre").value || "").trim();
-    const plataforma = document.getElementById("kr-plataforma").value;
-    const frecuencia = (document.getElementById("kr-frecuencia").value || "").trim();
-
-    if (!nombre) {
-      alert("El nombre es obligatorio.");
-      return;
+    function showMsg(text, ok) {
+      if (!msg) return;
+      msg.style.display = "block";
+      msg.textContent = text;
+      msg.style.color = ok ? "rgba(191,255,225,.95)" : "rgba(255,208,208,.95)";
+      clearTimeout(window.__krMsgT);
+      window.__krMsgT = setTimeout(() => {
+        msg.style.display = "none";
+      }, 2400);
     }
 
-    const res = await fetch("/api/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre, plataforma, frecuencia })
-    });
-
-    const data = await res.json();
-    if (!data.ok) {
-      alert(data.error || "No se pudo crear la tarea");
-      return;
+    async function jsonFetch(url, opts) {
+      const res = await fetch(
+        url,
+        Object.assign(
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            body: "{}",
+          },
+          opts || {},
+        ),
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        const err = data.error || data.message || "HTTP " + res.status;
+        throw new Error(err);
+      }
+      return data;
     }
 
-    // Cierra el modal y recarga para ver los números actualizados
-    overlay.style.display = "none";
-    location.reload();
-  }
-  guardar?.addEventListener("click", crearTarea);
+    function setUI(running) {
+      if (!chip || !btn) return;
+      chip.dataset.running = running ? "1" : "0";
+      chip.classList.toggle("kr-chip-ok", !!running);
+      chip.classList.toggle("kr-chip-off", !running);
+      chip.textContent = running
+        ? "● {{ tr('dashboard.system_on','Scheduler ON') }}"
+        : "● {{ tr('dashboard.system_off','Scheduler OFF') }}";
+      btn.textContent = running
+        ? "{{ tr('dashboard.turn_off','Apagar') }}"
+        : "{{ tr('dashboard.turn_on','Encender') }}";
+      btn.classList.toggle("kr-btn-danger", !!running);
+      btn.classList.toggle("kr-btn-gold", !running);
+    }
+
+    async function toggleScheduler() {
+      const running = chip && chip.dataset.running === "1";
+      btn.disabled = true;
+
+      try {
+        let data;
+        try {
+          data = await jsonFetch("/api/scheduler/toggle");
+        } catch (e1) {
+          const url = running ? "/api/scheduler/stop" : "/api/scheduler/start";
+          data = await jsonFetch(url);
+        }
+
+        const newRunning =
+          data.running !== undefined ? !!data.running : !running;
+        setUI(newRunning);
+        showMsg(
+          newRunning
+            ? "{{ tr('dashboard.scheduler_on_msg','Scheduler encendido.') }}"
+            : "{{ tr('dashboard.scheduler_off_msg','Scheduler apagado.') }}",
+          true,
+        );
+      } catch (err) {
+        showMsg(
+          "{{ tr('dashboard.scheduler_err','No pude cambiar el estado del scheduler. Revisa el backend.') }}",
+          false,
+        );
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    if (btn && chip) {
+      setUI(chip.dataset.running === "1");
+      btn.addEventListener("click", toggleScheduler);
+    }
+  })();
 </script>
-
 {% endblock %}

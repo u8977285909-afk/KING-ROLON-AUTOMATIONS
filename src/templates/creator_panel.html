@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('creator.title_tab') }} | {{ t('app.name') }}{% endblock %}
+{% block page_title %}{{ t('creator.title') }}{% endblock %}
+{% block page_subtitle %}{{ t('creator.subtitle') }}{% endblock %}
+
+{% block content %}
+
+{# =========================
+   DATOS SEGUROS
+========================= #}
+{% set u = current_user or {} %}
+{% set name = u.name or u.email or t('creator.default_name') %}
+{% set role = (u.role or "FREE") %}
+{% set apps = my_apps or [] %}
+
+{# =========================
+   HERO CREADOR
+========================= #}
+<section class="kr-card kr-mt-lg">
+  <div class="kr-settings-header-row">
+    <div>
+      <h2 class="kr-card-title">👑 {{ name }}</h2>
+      <p class="kr-card-label">
+        {{ t('creator.hero_desc') }}
+      </p>
+    </div>
+    <span class="kr-tag kr-tag-ok">{{ role|upper }}</span>
+  </div>
+
+  <div class="kr-grid kr-grid-3 kr-mt-md">
+    <div>
+      <div class="kr-card-number">{{ apps|length }}</div>
+      <div class="kr-text-muted">{{ t('creator.apps_created') }}</div>
+    </div>
+    <div>
+      <div class="kr-card-number">€ 0.00</div>
+      <div class="kr-text-muted">{{ t('creator.earnings_mvp') }}</div>
+    </div>
+    <div>
+      <div class="kr-card-number">0</div>
+      <div class="kr-text-muted">{{ t('creator.sales') }}</div>
+    </div>
+  </div>
+</section>
+
+{# =========================
+   LISTA DE APPS DEL CREADOR
+========================= #}
+<section class="kr-card kr-mt-lg">
+  <div class="kr-settings-header-row">
+    <div>
+      <h2 class="kr-card-title">{{ t('creator.my_apps_title') }}</h2>
+      <p class="kr-card-label">
+        {{ t('creator.my_apps_desc') }}
+      </p>
+    </div>
+
+    <a href="{{ url_for('marketplace') }}" class="kr-btn kr-btn-xs kr-btn-gold">
+      {{ t('creator.go_marketplace') }}
+    </a>
+  </div>
+
+  {% if apps %}
+    <ul class="kr-list kr-mt-lg">
+      {% for app in apps %}
+        {% set price_eur = ((app.price_cents or 0) / 100) %}
+        <li style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;">
+          <div>
+            <div style="font-weight:900;">
+              {{ app.title or t('creator.app_no_title') }}
+            </div>
+            <div class="kr-text-muted" style="font-size:11px;">
+              {{ app.platform or "—" }} · € {{ price_eur|round(2) }}
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;">
+            {% if (app.status or "") == "published" %}
+              <span class="kr-tag kr-tag-ok">{{ t('market.status_published') }}</span>
+            {% else %}
+              <span class="kr-tag kr-tag-pending">{{ t('market.status_draft') }}</span>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="kr-text-muted kr-mt-lg">
+      {{ t('creator.empty') }}
+    </p>
+  {% endif %}
+</section>
+
+{# =========================
+   BLOQUE FUTURO (MVP)
+========================= #}
+<section class="kr-card kr-mt-lg" style="opacity:.55;">
+  <h2 class="kr-card-title">📈 {{ t('creator.metrics_title') }}</h2>
+  <p class="kr-text-muted">
+    {{ t('creator.metrics_desc') }}
+  </p>
+</section>
+
+{% endblock %}

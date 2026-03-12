@@ -1,0 +1,787 @@
+{# templates/upload_video.html — KING ROLON AUTOMATIONS (UPLOAD VIDEO) — FINAL
+THUMB EDITOR PRO ✅ #} {% extends "base.html" %} {% set _views =
+(app.view_functions if app is defined and app.view_functions is defined else {})
+%} {% set EP_FEED = ('videos_feed' if ('videos_feed' in _views) else
+('vm_videos_feed' if ('vm_videos_feed' in _views) else '')) %} {% set
+EP_UPLOAD_API = ('api_video_upload' if ('api_video_upload' in _views) else
+('vm_api_video_upload' if ('vm_api_video_upload' in _views) else '')) %} {%
+block title %}Subir video | {{ (t('app.name') if t else 'KING ROLON
+AUTOMATIONS') }}{% endblock %} {% block page_title %}⬆️ Subir video{% endblock
+%} {% block page_subtitle %}Agrega título, descripción, privacidad y una
+miniatura opcional para tu contenido.{% endblock %} {% block content %}
+<div class="kr-page">
+  <div
+    style="
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    "
+  >
+    {% if EP_FEED %}
+    <a class="kr-btn" href="{{ url_for(EP_FEED) }}">⬅️ Volver</a>
+    {% else %}
+    <a class="kr-btn" href="/videos">⬅️ Volver</a>
+    {% endif %}
+  </div>
+
+  <div class="kr-card" style="padding: 1.2rem">
+    <form id="uploadForm" autocomplete="off">
+      <div style="display: grid; gap: 1rem">
+        <label style="display: grid; gap: 0.4rem">
+          <b>Título</b>
+          <input
+            name="title"
+            type="text"
+            placeholder="Ej: Mi primer video KR"
+            class="kr-input"
+            maxlength="120"
+          />
+          <small style="opacity: 0.7">Opcional · Máx. 120 caracteres</small>
+        </label>
+
+        <label style="display: grid; gap: 0.4rem">
+          <b>Descripción</b>
+          <textarea
+            name="description"
+            rows="4"
+            placeholder="Describe tu video..."
+            class="kr-input"
+            maxlength="2000"
+          ></textarea>
+          <small style="opacity: 0.7">Opcional · Máx. 2000 caracteres</small>
+        </label>
+
+        <label style="display: grid; gap: 0.4rem">
+          <b>Privacidad</b>
+          <select id="visibility" name="visibility" class="kr-input">
+            <option value="public" selected>🌍 Público</option>
+            <option value="contacts">👥 Contactos</option>
+            <option value="private">🔒 Solo tú</option>
+          </select>
+          <small style="opacity: 0.7">
+            Público: visible para todos · Contactos: seguidores mutuos ·
+            Privado: solo tú.
+          </small>
+        </label>
+
+        <label style="display: grid; gap: 0.4rem">
+          <b>Archivo de video</b>
+          <input
+            id="videoFile"
+            name="video"
+            type="file"
+            accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov"
+            required
+          />
+          <small style="opacity: 0.7">
+            Formatos permitidos: MP4 / WEBM / MOV · Máx. 500MB
+          </small>
+          <small id="videoFileInfo" style="opacity: 0.78"></small>
+        </label>
+
+        <label style="display: grid; gap: 0.4rem">
+          <b>Miniatura</b>
+          <input
+            id="thumbFile"
+            name="thumbnail"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+          />
+          <small style="opacity: 0.7">
+            Opcional · JPG / JPEG / PNG / WEBP · Máx. 8MB
+          </small>
+          <small id="thumbFileInfo" style="opacity: 0.78"></small>
+        </label>
+
+        <input type="hidden" name="thumbnail_pos_x" id="thumbPosX" value="50" />
+        <input type="hidden" name="thumbnail_pos_y" id="thumbPosY" value="50" />
+        <input type="hidden" name="thumbnail_scale" id="thumbScale" value="1" />
+
+        <div
+          id="thumbEditorWrap"
+          style="
+            display: none;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            grid-template-columns: minmax(0, 1fr) 260px;
+            align-items: start;
+          "
+        >
+          <div style="display: grid; gap: 0.75rem; min-width: 0">
+            <b>Editor de miniatura</b>
+
+            <div
+              id="thumbEditorViewport"
+              style="
+                position: relative;
+                width: min(100%, 700px);
+                aspect-ratio: 16/9;
+                overflow: hidden;
+                border-radius: 16px;
+                background: #000;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+                touch-action: none;
+                user-select: none;
+                cursor: grab;
+              "
+            >
+              <img
+                id="thumbEditorImg"
+                alt="Editor de miniatura"
+                draggable="false"
+                style="
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%) scale(1);
+                  transform-origin: center center;
+                  max-width: none;
+                  max-height: none;
+                  will-change: transform, width, height;
+                  pointer-events: none;
+                  display: block;
+                "
+              />
+
+              <div
+                style="
+                  position: absolute;
+                  inset: 0;
+                  pointer-events: none;
+                  border: 1px solid rgba(255, 255, 255, 0.06);
+                "
+              ></div>
+              <div
+                style="
+                  position: absolute;
+                  inset: 0;
+                  pointer-events: none;
+                  background:
+                    linear-gradient(
+                      to right,
+                      transparent calc(50% - 0.5px),
+                      rgba(255, 255, 255, 0.12) calc(50% - 0.5px),
+                      rgba(255, 255, 255, 0.12) calc(50% + 0.5px),
+                      transparent calc(50% + 0.5px)
+                    ),
+                    linear-gradient(
+                      to bottom,
+                      transparent calc(50% - 0.5px),
+                      rgba(255, 255, 255, 0.12) calc(50% - 0.5px),
+                      rgba(255, 255, 255, 0.12) calc(50% + 0.5px),
+                      transparent calc(50% + 0.5px)
+                    );
+                "
+              ></div>
+            </div>
+
+            <small style="opacity: 0.78">
+              Arrastra la miniatura para centrarla. Usa el zoom para encuadrarla
+              bien completa.
+            </small>
+          </div>
+
+          <div style="display: grid; gap: 0.85rem; min-width: 0">
+            <div style="display: grid; gap: 0.35rem">
+              <b>Vista previa</b>
+              <small id="thumbPreviewMeta" style="opacity: 0.78"></small>
+            </div>
+
+            <div
+              id="thumbPreviewBox"
+              style="
+                width: 220px;
+                max-width: 100%;
+                aspect-ratio: 16/9;
+                overflow: hidden;
+                border-radius: 14px;
+                background: #000;
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                position: relative;
+              "
+            >
+              <img
+                id="thumbPreviewImg"
+                alt="Vista previa de miniatura"
+                draggable="false"
+                style="
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%) scale(1);
+                  transform-origin: center center;
+                  max-width: none;
+                  max-height: none;
+                  display: block;
+                  will-change: transform, width, height;
+                "
+              />
+            </div>
+
+            <label style="display: grid; gap: 0.35rem">
+              <b>Zoom</b>
+              <input
+                id="thumbZoom"
+                type="range"
+                min="1"
+                max="3"
+                step="0.01"
+                value="1"
+              />
+              <small id="thumbZoomInfo" style="opacity: 0.78">100%</small>
+            </label>
+
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap">
+              <button
+                class="kr-btn kr-btn-outline"
+                type="button"
+                id="thumbCenterBtn"
+              >
+                Centrar
+              </button>
+              <button
+                class="kr-btn kr-btn-outline"
+                type="button"
+                id="thumbFitBtn"
+              >
+                Ajustar
+              </button>
+              <button
+                class="kr-btn kr-btn-outline"
+                type="button"
+                id="thumbRemoveBtn"
+              >
+                Quitar miniatura
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button id="btnUpload" class="kr-btn" type="submit">🚀 Subir</button>
+
+        <div id="status" style="opacity: 0.9; font-weight: 600"></div>
+
+        <div id="progressWrap" style="display: none; margin-top: 0.2rem">
+          <div
+            style="
+              height: 10px;
+              border-radius: 999px;
+              background: rgba(255, 255, 255, 0.08);
+              overflow: hidden;
+            "
+          >
+            <div
+              id="progressBar"
+              style="
+                height: 10px;
+                width: 0%;
+                background: rgba(255, 255, 255, 0.35);
+              "
+            ></div>
+          </div>
+          <div
+            id="progressText"
+            style="margin-top: 0.35rem; font-size: 0.9rem; opacity: 0.8"
+          ></div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  const form = document.getElementById("uploadForm");
+  const statusEl = document.getElementById("status");
+  const btn = document.getElementById("btnUpload");
+
+  const fileEl = document.getElementById("videoFile");
+  const thumbEl = document.getElementById("thumbFile");
+  const visEl = document.getElementById("visibility");
+
+  const videoFileInfo = document.getElementById("videoFileInfo");
+  const thumbFileInfo = document.getElementById("thumbFileInfo");
+
+  const thumbEditorWrap = document.getElementById("thumbEditorWrap");
+  const thumbEditorViewport = document.getElementById("thumbEditorViewport");
+  const thumbEditorImg = document.getElementById("thumbEditorImg");
+  const thumbPreviewImg = document.getElementById("thumbPreviewImg");
+  const thumbPreviewMeta = document.getElementById("thumbPreviewMeta");
+
+  const thumbZoom = document.getElementById("thumbZoom");
+  const thumbZoomInfo = document.getElementById("thumbZoomInfo");
+  const thumbCenterBtn = document.getElementById("thumbCenterBtn");
+  const thumbFitBtn = document.getElementById("thumbFitBtn");
+  const thumbRemoveBtn = document.getElementById("thumbRemoveBtn");
+
+  const thumbPosX = document.getElementById("thumbPosX");
+  const thumbPosY = document.getElementById("thumbPosY");
+  const thumbScale = document.getElementById("thumbScale");
+
+  const progressWrap = document.getElementById("progressWrap");
+  const progressBar = document.getElementById("progressBar");
+  const progressText = document.getElementById("progressText");
+
+  const MAX_VIDEO_MB = 500;
+  const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
+
+  const MAX_THUMB_MB = 8;
+  const MAX_THUMB_BYTES = MAX_THUMB_MB * 1024 * 1024;
+
+  const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+  const ALLOWED_VIDEO_EXTS = [".mp4", ".webm", ".mov"];
+
+  const ALLOWED_THUMB_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  const ALLOWED_THUMB_EXTS = [".jpg", ".jpeg", ".png", ".webp"];
+
+  const UPLOAD_URL = "{% if EP_UPLOAD_API %}{{ url_for(EP_UPLOAD_API) }}{% else %}/api/videos/upload{% endif %}";
+
+  let thumbPreviewObjectUrl = null;
+
+  let dragState = {
+    active: false,
+    pointerId: null,
+    startClientX: 0,
+    startClientY: 0,
+    startOffsetX: 0,
+    startOffsetY: 0,
+  };
+
+  let editorState = {
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+    naturalWidth: 0,
+    naturalHeight: 0,
+    baseWidth: 0,
+    baseHeight: 0,
+  };
+
+  function humanSize(bytes) {
+    const mb = bytes / (1024 * 1024);
+    if (!isFinite(mb)) return "0 MB";
+    return mb.toFixed(1) + " MB";
+  }
+
+  function normalizeVisibility(v) {
+    v = String(v || "").trim().toLowerCase();
+    if (["public", "contacts", "private"].includes(v)) return v;
+    return "public";
+  }
+
+  function getExt(name) {
+    const n = String(name || "").toLowerCase();
+    const i = n.lastIndexOf(".");
+    return i >= 0 ? n.slice(i) : "";
+  }
+
+  function isAllowedVideo(file) {
+    const ext = getExt(file?.name || "");
+    if (file?.type && ALLOWED_VIDEO_TYPES.includes(file.type)) return true;
+    return ALLOWED_VIDEO_EXTS.includes(ext);
+  }
+
+  function isAllowedThumb(file) {
+    const ext = getExt(file?.name || "");
+    if (file?.type && ALLOWED_THUMB_TYPES.includes(file.type)) return true;
+    return ALLOWED_THUMB_EXTS.includes(ext);
+  }
+
+  function setProgress(pct, text) {
+    if (!progressWrap) return;
+    progressWrap.style.display = "block";
+
+    const safePct = Math.max(0, Math.min(100, pct));
+    if (progressBar) progressBar.style.width = String(safePct) + "%";
+    if (progressText) progressText.textContent = text || "";
+  }
+
+  function resetProgress() {
+    if (!progressWrap) return;
+    progressWrap.style.display = "none";
+    if (progressBar) progressBar.style.width = "0%";
+    if (progressText) progressText.textContent = "";
+  }
+
+  function updateVideoInfo() {
+    if (!videoFileInfo) return;
+    const file = fileEl?.files?.[0];
+    videoFileInfo.textContent = file ? `${file.name} · ${humanSize(file.size)}` : "";
+  }
+
+  function clearThumbPreview() {
+    if (thumbPreviewObjectUrl) {
+      URL.revokeObjectURL(thumbPreviewObjectUrl);
+      thumbPreviewObjectUrl = null;
+    }
+
+    if (thumbEditorImg) thumbEditorImg.removeAttribute("src");
+    if (thumbPreviewImg) thumbPreviewImg.removeAttribute("src");
+    if (thumbPreviewMeta) thumbPreviewMeta.textContent = "";
+    if (thumbEditorWrap) thumbEditorWrap.style.display = "none";
+    if (thumbFileInfo && !(thumbEl?.files?.length)) thumbFileInfo.textContent = "";
+
+    editorState = {
+      offsetX: 0,
+      offsetY: 0,
+      scale: 1,
+      naturalWidth: 0,
+      naturalHeight: 0,
+      baseWidth: 0,
+      baseHeight: 0,
+    };
+
+    if (thumbZoom) thumbZoom.value = "1";
+    if (thumbZoomInfo) thumbZoomInfo.textContent = "100%";
+    if (thumbPosX) thumbPosX.value = "50";
+    if (thumbPosY) thumbPosY.value = "50";
+    if (thumbScale) thumbScale.value = "1";
+  }
+
+  function computeCoverBase(nw, nh, vw, vh) {
+    const imgRatio = nw / nh;
+    const viewRatio = vw / vh;
+
+    let width = 0;
+    let height = 0;
+
+    if (imgRatio >= viewRatio) {
+      height = vh;
+      width = height * imgRatio;
+    } else {
+      width = vw;
+      height = width / imgRatio;
+    }
+
+    return { width, height };
+  }
+
+  function clampOffsets() {
+    if (!thumbEditorViewport) return;
+
+    const vw = thumbEditorViewport.clientWidth || 0;
+    const vh = thumbEditorViewport.clientHeight || 0;
+
+    const scaledW = editorState.baseWidth * editorState.scale;
+    const scaledH = editorState.baseHeight * editorState.scale;
+
+    const maxOffsetX = Math.max(0, (scaledW - vw) / 2);
+    const maxOffsetY = Math.max(0, (scaledH - vh) / 2);
+
+    editorState.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, editorState.offsetX));
+    editorState.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, editorState.offsetY));
+  }
+
+  function syncHiddenThumbFields() {
+    if (!thumbEditorViewport) return;
+
+    const vw = thumbEditorViewport.clientWidth || 1;
+    const vh = thumbEditorViewport.clientHeight || 1;
+
+    const pxX = (vw / 2) - editorState.offsetX;
+    const pxY = (vh / 2) - editorState.offsetY;
+
+    const posXPercent = (pxX / vw) * 100;
+    const posYPercent = (pxY / vh) * 100;
+
+    if (thumbPosX) thumbPosX.value = String(posXPercent.toFixed(4));
+    if (thumbPosY) thumbPosY.value = String(posYPercent.toFixed(4));
+    if (thumbScale) thumbScale.value = String(editorState.scale.toFixed(4));
+  }
+
+  function applyThumbTransform() {
+    if (!thumbEditorViewport || !thumbEditorImg || !thumbPreviewImg) return;
+
+    clampOffsets();
+
+    const transform = `translate(-50%, -50%) translate(${editorState.offsetX}px, ${editorState.offsetY}px) scale(${editorState.scale})`;
+
+    thumbEditorImg.style.width = editorState.baseWidth + "px";
+    thumbEditorImg.style.height = editorState.baseHeight + "px";
+    thumbEditorImg.style.transform = transform;
+
+    thumbPreviewImg.style.width = editorState.baseWidth + "px";
+    thumbPreviewImg.style.height = editorState.baseHeight + "px";
+    thumbPreviewImg.style.transform = transform;
+
+    if (thumbZoomInfo) {
+      thumbZoomInfo.textContent = Math.round(editorState.scale * 100) + "%";
+    }
+
+    syncHiddenThumbFields();
+  }
+
+  function centerThumb() {
+    editorState.offsetX = 0;
+    editorState.offsetY = 0;
+    applyThumbTransform();
+  }
+
+  function fitThumb() {
+    editorState.scale = 1;
+    if (thumbZoom) thumbZoom.value = "1";
+    centerThumb();
+  }
+
+  function rebuildBaseKeepingImage() {
+    if (!thumbEditorViewport || !editorState.naturalWidth || !editorState.naturalHeight) return;
+
+    const base = computeCoverBase(
+      editorState.naturalWidth,
+      editorState.naturalHeight,
+      thumbEditorViewport.clientWidth || 1,
+      thumbEditorViewport.clientHeight || 1
+    );
+
+    editorState.baseWidth = base.width;
+    editorState.baseHeight = base.height;
+    applyThumbTransform();
+  }
+
+  function loadThumbPreview(file) {
+    clearThumbPreview();
+
+    try {
+      thumbPreviewObjectUrl = URL.createObjectURL(file);
+      thumbEditorImg.src = thumbPreviewObjectUrl;
+      thumbPreviewImg.src = thumbPreviewObjectUrl;
+    } catch (e) {
+      return;
+    }
+
+    const imgProbe = new Image();
+    imgProbe.onload = function () {
+      editorState.naturalWidth = imgProbe.naturalWidth || 0;
+      editorState.naturalHeight = imgProbe.naturalHeight || 0;
+      editorState.offsetX = 0;
+      editorState.offsetY = 0;
+      editorState.scale = 1;
+
+      rebuildBaseKeepingImage();
+
+      if (thumbZoom) thumbZoom.value = "1";
+      if (thumbPreviewMeta) {
+        thumbPreviewMeta.textContent = `${file.name} · ${humanSize(file.size)} · ${imgProbe.naturalWidth}x${imgProbe.naturalHeight}`;
+      }
+      if (thumbEditorWrap) thumbEditorWrap.style.display = "grid";
+    };
+    imgProbe.src = thumbPreviewObjectUrl;
+  }
+
+  function updateThumbInfoAndPreview() {
+    const file = thumbEl?.files?.[0];
+    if (!file) {
+      clearThumbPreview();
+      return;
+    }
+
+    if (thumbFileInfo) {
+      thumbFileInfo.textContent = `${file.name} · ${humanSize(file.size)}`;
+    }
+
+    if (!isAllowedThumb(file)) {
+      clearThumbPreview();
+      return;
+    }
+
+    loadThumbPreview(file);
+  }
+
+  async function uploadWithXHR(formData) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", UPLOAD_URL, true);
+      xhr.withCredentials = true;
+      xhr.setRequestHeader("Accept", "application/json");
+
+      xhr.upload.onprogress = (evt) => {
+        if (!evt.lengthComputable) return;
+        const pct = Math.round((evt.loaded / evt.total) * 100);
+        setProgress(
+          pct,
+          `Subiendo ${pct}% · ${humanSize(evt.loaded)} / ${humanSize(evt.total)}`
+        );
+      };
+
+      xhr.onload = () => {
+        let data = {};
+        try {
+          data = JSON.parse(xhr.responseText || "{}");
+        } catch (e) {}
+
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          status: xhr.status,
+          data,
+        });
+      };
+
+      xhr.onerror = () => reject(new Error("network_error"));
+      xhr.send(formData);
+    });
+  }
+
+  if (fileEl) {
+    fileEl.addEventListener("change", updateVideoInfo);
+  }
+
+  if (thumbEl) {
+    thumbEl.addEventListener("change", updateThumbInfoAndPreview);
+  }
+
+  if (thumbZoom) {
+    thumbZoom.addEventListener("input", () => {
+      editorState.scale = Number(thumbZoom.value || 1);
+      applyThumbTransform();
+    });
+  }
+
+  if (thumbCenterBtn) {
+    thumbCenterBtn.addEventListener("click", () => {
+      centerThumb();
+    });
+  }
+
+  if (thumbFitBtn) {
+    thumbFitBtn.addEventListener("click", () => {
+      fitThumb();
+    });
+  }
+
+  if (thumbRemoveBtn) {
+    thumbRemoveBtn.addEventListener("click", () => {
+      if (thumbEl) thumbEl.value = "";
+      clearThumbPreview();
+    });
+  }
+
+  if (thumbEditorViewport) {
+    thumbEditorViewport.addEventListener("pointerdown", (e) => {
+      if (!thumbEditorImg?.src) return;
+
+      dragState.active = true;
+      dragState.pointerId = e.pointerId;
+      dragState.startClientX = e.clientX;
+      dragState.startClientY = e.clientY;
+      dragState.startOffsetX = editorState.offsetX;
+      dragState.startOffsetY = editorState.offsetY;
+
+      thumbEditorViewport.style.cursor = "grabbing";
+
+      try {
+        thumbEditorViewport.setPointerCapture(e.pointerId);
+      } catch (err) {}
+    });
+
+    thumbEditorViewport.addEventListener("pointermove", (e) => {
+      if (!dragState.active) return;
+
+      editorState.offsetX = dragState.startOffsetX + (e.clientX - dragState.startClientX);
+      editorState.offsetY = dragState.startOffsetY + (e.clientY - dragState.startClientY);
+      applyThumbTransform();
+    });
+
+    const stopDrag = (e) => {
+      if (!dragState.active) return;
+      dragState.active = false;
+      thumbEditorViewport.style.cursor = "grab";
+      try {
+        thumbEditorViewport.releasePointerCapture(e.pointerId);
+      } catch (err) {}
+    };
+
+    thumbEditorViewport.addEventListener("pointerup", stopDrag);
+    thumbEditorViewport.addEventListener("pointercancel", stopDrag);
+  }
+
+  window.addEventListener("resize", () => {
+    if (editorState.naturalWidth && editorState.naturalHeight) {
+      rebuildBaseKeepingImage();
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    statusEl.textContent = "";
+    resetProgress();
+
+    if (!fileEl.files || !fileEl.files.length) {
+      statusEl.textContent = "❌ Selecciona un video.";
+      return;
+    }
+
+    const videoFile = fileEl.files[0];
+    const thumbFile = thumbEl?.files?.[0] || null;
+
+    if (!isAllowedVideo(videoFile)) {
+      statusEl.textContent = "❌ Formato de video no permitido.";
+      return;
+    }
+
+    if (videoFile.size > MAX_VIDEO_BYTES) {
+      statusEl.textContent = `❌ Video demasiado grande (${humanSize(videoFile.size)}). Máx: ${MAX_VIDEO_MB} MB.`;
+      return;
+    }
+
+    if (thumbFile) {
+      if (!isAllowedThumb(thumbFile)) {
+        statusEl.textContent = "❌ Formato de miniatura no permitido.";
+        return;
+      }
+
+      if (thumbFile.size > MAX_THUMB_BYTES) {
+        statusEl.textContent = `❌ Miniatura demasiado grande (${humanSize(thumbFile.size)}). Máx: ${MAX_THUMB_MB} MB.`;
+        return;
+      }
+    }
+
+    if (visEl) visEl.value = normalizeVisibility(visEl.value);
+
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = "Subiendo...";
+    statusEl.textContent = "⏳ Subiendo...";
+
+    const fd = new FormData(form);
+
+    try {
+      const { ok, data } = await uploadWithXHR(fd);
+
+      if (!ok || !data.ok) {
+        statusEl.textContent = "❌ " + (data.error || "No se pudo subir.");
+        btn.disabled = false;
+        btn.textContent = oldText;
+        return;
+      }
+
+      setProgress(100, "✅ Subida completa");
+      statusEl.textContent = data.thumbnail_filename
+        ? "✅ Video y miniatura subidos correctamente."
+        : "✅ Video subido correctamente.";
+      btn.textContent = "✔ Subido";
+
+      setTimeout(() => {
+        {% if EP_FEED %}
+          window.location.href = "{{ url_for(EP_FEED) }}";
+        {% else %}
+          window.location.href = "/videos";
+        {% endif %}
+      }, 700);
+    } catch (err) {
+      statusEl.textContent = "❌ Error de conexión.";
+      btn.disabled = false;
+      btn.textContent = oldText;
+      resetProgress();
+    }
+  });
+
+  window.addEventListener("pagehide", () => {
+    clearThumbPreview();
+  });
+</script>
+{% endblock %}

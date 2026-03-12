@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Tienda KR | KING ROLON AUTOMATIONS{% endblock %}
+{% block page_title %}Tienda de automatizaciones{% endblock %}
+{% block page_subtitle %}
+Instala plantillas listas para usar en tus automatizaciones. Un clic y el Reino trabaja por ti. 🛠️👑
+{% endblock %}
+
+{% block content %}
+
+<div class="kr-grid kr-grid-2 kr-mt-lg">
+
+  <!-- CATÁLOGO (HORIZONTAL) -->
+  <section class="kr-card">
+    <h2 class="kr-card-title">Catálogo principal</h2>
+    <p class="kr-card-label">
+      Plantillas desde la base de datos. Instala, prueba, desinstala y vuelve a instalar cuando quieras.
+    </p>
+
+    <div style="margin-top:16px; display:flex; gap:12px; overflow-x:auto; padding-bottom:6px;">
+      {% if catalogo %}
+        {% for p in catalogo %}
+          <article
+            style="
+              min-width:260px; max-width:260px;
+              border-radius:18px;
+              background:
+                radial-gradient(circle at top left, #322f52, #171628)
+                padding-box,
+                linear-gradient(135deg, rgba(247,227,156,0.6), rgba(93,197,170,0.6)) border-box;
+              padding:12px 12px 10px 12px;
+              border:1px solid transparent;
+              box-shadow:0 8px 22px rgba(0,0,0,0.55);
+              display:flex; flex-direction:column; justify-content:space-between;"
+          >
+            <div>
+              <h3 style="margin:0 0 4px 0;font-size:14px;font-weight:650;color:#f9f9ff;">
+                {{ p.nombre }}
+              </h3>
+
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;">
+                {% if p.plataforma %}
+                  <span class="kr-tag kr-tag-pending">🪄 {{ p.plataforma }}</span>
+                {% endif %}
+                {% if p.nivel %}
+                  <span class="kr-tag kr-tag-off">⚙️ {{ p.nivel }}</span>
+                {% endif %}
+                {% if p.precio == 0 %}
+                  <span class="kr-tag kr-tag-ok">Gratis</span>
+                {% else %}
+                  <span class="kr-tag kr-tag-ok">€ {{ (p.precio / 100) | round(2) }}</span>
+                  <span class="kr-tag kr-tag-pending">Premium</span>
+                {% endif %}
+              </div>
+
+              {% if p.descripcion %}
+                <p class="kr-text-muted" style="font-size:11px;margin-top:6px;line-height:1.45;">
+                  {{ p.descripcion }}
+                </p>
+              {% endif %}
+            </div>
+
+            <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
+              {% if p.instalada %}
+                <span class="kr-tag kr-tag-ok" style="font-size:11px;">Instalada</span>
+                <form method="post"
+                      action="{{ url_for('store_uninstall', product_id=p.id) }}"
+                      style="margin:0;">
+                  <button type="submit"
+                          class="kr-btn kr-btn-xs"
+                          style="background:#2f2d46;color:#f7f7ff;">
+                    Quitar
+                  </button>
+                </form>
+              {% else %}
+                <span class="kr-text-muted" style="font-size:10px;">Lista para instalar</span>
+                <form method="post"
+                      action="{{ url_for('store_install', product_id=p.id) }}"
+                      style="margin:0;">
+                  <button type="submit" class="kr-btn kr-btn-xs kr-btn-gold">
+                    Instalar
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      {% else %}
+        <p class="kr-text-muted" style="font-size:12px;">
+          Aún no hay plantillas en la Tienda KR. Muy pronto verás aquí los primeros módulos oficiales del Reino. ✨
+        </p>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- RESUMEN -->
+  <section class="kr-card">
+    <h2 class="kr-card-title">Resumen de tu tienda</h2>
+    <p class="kr-card-label">Plantillas instaladas y disponibles.</p>
+
+    <dl class="kr-settings-list" style="margin-top:10px;">
+      <dt>Plantillas instaladas</dt>
+      <dd>{{ total_instaladas }}</dd>
+
+      <dt>Plantillas disponibles</dt>
+      <dd>{{ total_disponibles }}</dd>
+
+      <dt>Plataformas cubiertas</dt>
+      <dd>
+        {% if plataformas_cubiertas %}
+          {{ plataformas_cubiertas | join(", ") }}
+        {% else %}
+          Ninguna todavía
+        {% endif %}
+      </dd>
+    </dl>
+
+    {% if plantillas_instaladas %}
+      <h3 style="margin-top:18px;font-size:13px;font-weight:600;">Instaladas por ti</h3>
+      <ul class="kr-list" style="font-size:12px;margin-top:6px;">
+        {% for p in plantillas_instaladas %}
+          <li>
+            <span>{{ p.nombre }}</span>
+            <span class="kr-tag kr-tag-ok">Activa</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="kr-text-muted" style="margin-top:14px;font-size:12px;">
+        Aún no has instalado ninguna plantilla. Empieza con “TikTok: Clip diario automático”. ✨
+      </p>
+    {% endif %}
+  </section>
+
+</div>
+
+<!-- INFO MARKETPLACE -->
+<section class="kr-card kr-mt-lg">
+  <h2 class="kr-card-title">Marketplace del Reino</h2>
+  <p class="kr-card-label">
+    Para automatizaciones avanzadas creadas por otros creadores, entra en la sección
+    <strong>“Marketplace”</strong> del menú. Allí podrás descargar apps completas y, en el futuro,
+    comprar módulos premium con comisiones para el Reino. 🏪👑
+  </p>
+</section>
+
+{% endblock %}

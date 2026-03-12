@@ -1,0 +1,1775 @@
+{# templates/videos.html — KING ROLON AUTOMATIONS (VIDEOS / LIBRARY) KR SEARCH
+SUPREME v6 POLISHED + HOVER PREVIEW + THUMBNAILS PRO ✅ #} {% extends
+"base.html" %} {% set disable_page_head = true %} {% set _views =
+(app.view_functions if app is defined and app.view_functions is defined else {})
+%} {% set _ap = (active_page or '')|string %} {% set is_library = (_ap ==
+'library') %} {% set EP_FEED = ('videos_feed' if ('videos_feed' in _views) else
+('vm_videos_feed' if ('vm_videos_feed' in _views) else '')) %} {% set EP_LIB =
+('videos_library' if ('videos_library' in _views) else ('vm_videos_library' if
+('vm_videos_library' in _views) else '')) %} {% set EP_WATCH = ('watch_video' if
+('watch_video' in _views) else ('vm_watch_video' if ('vm_watch_video' in _views)
+else '')) %} {% set EP_DELETE = ('delete_video' if ('delete_video' in _views)
+else ('vm_delete_video' if ('vm_delete_video' in _views) else '')) %} {% set
+EP_STREAM = ('stream_video' if ('stream_video' in _views) else
+('vm_stream_video' if ('vm_stream_video' in _views) else '')) %} {% set
+EP_UPLOAD = ('upload_video_page' if ('upload_video_page' in _views) else
+('vm_upload_video_page' if ('vm_upload_video_page' in _views) else '')) %} {%
+set EP_SUGGEST = ('api_video_suggest' if ('api_video_suggest' in _views) else
+('vm_api_video_suggest' if ('vm_api_video_suggest' in _views) else '')) %} {%
+set EP_THUMB = ('video_thumb' if ('video_thumb' in _views) else
+('vm_video_thumb' if ('vm_video_thumb' in _views) else '')) %} {% set
+EP_THUMB_TRANSFORM = ('api_video_thumb_transform' if
+('api_video_thumb_transform' in _views) else ('vm_api_video_thumb_transform' if
+('vm_api_video_thumb_transform' in _views) else '')) %} {% if
+'api_follow_toggle_v1' in _views %} {% set EP_FOLLOW = 'api_follow_toggle_v1' %}
+{% elif 'api_follow_toggle' in _views %} {% set EP_FOLLOW = 'api_follow_toggle'
+%} {% else %} {% set EP_FOLLOW = '' %} {% endif %} {% set CURRENT_EP = EP_LIB if
+is_library else EP_FEED %} {% set _lbl_app = (t('app.name') if t else 'KR') %}
+{% set _lbl_videos = (t('nav.videos') if t else 'Videos') %} {% set _lbl_library
+= (t('nav.library') if t else 'Mi biblioteca') %} {% set _lbl_ranking =
+(t('nav.ranking') if t else 'Ranking') %} {% set videos = videos or [] %} {% set
+top_rank = top_rank or [] %} {% set ad_card = ad_card or {} %} {% set
+search_query = (search_query or '') %} {% set sort_mode = (sort_mode or 'viral')
+%} {% set search_kind = (search_kind or 'general') %} {% set did_you_mean =
+(did_you_mean or '') %} {% set recent_searches = recent_searches or [] %} {% set
+trending_searches = trending_searches or [] %} {% set result_count =
+(result_count if result_count is not none else (videos|length)) %} {% set
+creator_result_count = (creator_result_count if creator_result_count is not none
+else 0) %} {% set hashtag_result_count = (hashtag_result_count if
+hashtag_result_count is not none else 0) %} {% set semantic_result_count =
+(semantic_result_count if semantic_result_count is not none else 0) %} {% set
+banner_cards = banner_cards or [] %} {% if not banner_cards %} {% set
+banner_cards = [ { 'badge': (ad_card.badge or 'AD'), 'title': (ad_card.title or
+'Marketplace KR'), 'text': (ad_card.text or 'Automatízate premium y crece más
+rápido.'), 'href': (ad_card.href or '/marketplace'), 'cta': (ad_card.cta or 'Ver
+oferta') }, { 'badge': 'PRO', 'title': 'Creator KR', 'text': 'Publica, crece y
+monetiza dentro del Reino.', 'href': '/creator', 'cta': 'Ir a Creator' }, {
+'badge': 'TOP', 'title': 'Ranking KR', 'text': 'Sube de nivel con seguidores,
+likes y colecciones.', 'href': '/ranking', 'cta': 'Ver ranking' }, { 'badge':
+'AI', 'title': 'Core KR', 'text': 'Impulsa tus decisiones con automatización e
+IA.', 'href': '/core', 'cta': 'Abrir Core' }, { 'badge': 'STORE', 'title':
+'Store KR', 'text': 'Descubre productos y herramientas del ecosistema.', 'href':
+'/store', 'cta': 'Abrir Store' } ] %} {% endif %} {% block title %} {% if
+is_library %} {{ _lbl_library }} | {{ _lbl_app }} {% else %} {{ _lbl_videos }} |
+{{ _lbl_app }} {% endif %} {% endblock %} {% macro render_video_card(v) %} {%
+set vid = v.get('id') %} {% set title = (v.get('title') or '')|string|trim %} {%
+set created = (v.get('created_at') or '—')|string %} {% set vis =
+(v.get('visibility') or 'public')|string|lower %} {% set owner_id =
+(v.get('user_id') or 0) %} {% set is_owner = (v.get('is_mine') if
+(v.get('is_mine') is not none) else false) %} {% set can_follow =
+(v.get('can_follow') if (v.get('can_follow') is not none) else false) %} {% set
+following = (v.get('following') if (v.get('following') is not none) else false)
+%} {% set can_like = (v.get('can_like') if (v.get('can_like') is not none) else
+false) %} {% set liked = (v.get('liked') if (v.get('liked') is not none) else
+false) %} {% set likes_count = (v.get('likes_count') if (v.get('likes_count') is
+not none) else 0) %} {% set can_collect = (v.get('can_collect') if
+(v.get('can_collect') is not none) else false) %} {% set collected =
+(v.get('collected') if (v.get('collected') is not none) else false) %} {% set
+views = (v.get('views_count') or 0) %} {% set collections_count =
+(v.get('collections_count') if (v.get('collections_count') is not none) else 0)
+%} {% set creator_username = (v.get('creator_username') or '')|string|trim %} {%
+set creator_name = (v.get('creator_name') or '')|string|trim %} {% set
+creator_public_slug = (v.get('creator_public_slug') or '')|string|trim %} {% set
+creator_verified = (v.get('creator_verified') if (v.get('creator_verified') is
+not none) else 0) %} {% set thumb_filename = (v.get('thumbnail_filename') or
+'')|string|trim %} {% set has_thumb = (thumb_filename|length > 0) %} {% set
+thumb_pos_x = (v.get('thumbnail_pos_x') if (v.get('thumbnail_pos_x') is not
+none) else 50) %} {% set thumb_pos_y = (v.get('thumbnail_pos_y') if
+(v.get('thumbnail_pos_y') is not none) else 50) %} {% set thumb_scale =
+(v.get('thumbnail_scale') if (v.get('thumbnail_scale') is not none) else 1) %}
+{% if EP_FOLLOW and owner_id %} {% set follow_url = url_for(EP_FOLLOW,
+target_id=owner_id) %} {% else %} {% set follow_url = '/api/follow/' ~ owner_id
+%} {% endif %} {% if EP_THUMB_TRANSFORM and is_owner and vid %} {% set
+thumb_transform_url = url_for(EP_THUMB_TRANSFORM, video_id=vid) %} {% else %} {%
+set thumb_transform_url = '' %} {% endif %}
+
+<article class="kr-video-card kr-video-card-equal">
+  <div class="kr-video-thumb-shell">
+    <a
+      href="{% if EP_WATCH and vid %}{{ url_for(EP_WATCH, video_id=vid) }}{% else %}#{% endif %}"
+      class="kr-video-card-thumb-link"
+      aria-label="Ver video"
+    >
+      <div class="kr-video-thumb-frame kr-video-thumb-equal">
+        {% if has_thumb and EP_THUMB and vid %}
+        <img
+          class="kr-video-thumb-image"
+          src="{{ url_for(EP_THUMB, video_id=vid) }}"
+          alt="{{ title if title else 'Miniatura del video' }}"
+          loading="lazy"
+          decoding="async"
+          style="object-position: {{ thumb_pos_x }}% {{ thumb_pos_y }}%; transform: scale({{ thumb_scale }});"
+        />
+        {% endif %}
+
+        <video
+          class="kr-video-thumb kr-video-hover-preview{% if has_thumb %} has-thumb{% endif %}"
+          data-preview-video="1"
+          {%
+          if
+          has_thumb
+          %}data-has-thumb="1"
+          {%
+          endif
+          %}
+          muted
+          loop
+          preload="metadata"
+          playsinline
+        >
+          {% if EP_STREAM and vid %}
+          <source src="{{ url_for(EP_STREAM, video_id=vid) }}" />
+          {% endif %} Tu navegador no soporta video HTML5.
+        </video>
+
+        {% if has_thumb %}
+        <div class="kr-video-thumb-play-badge" aria-hidden="true">▶</div>
+        {% endif %}
+      </div>
+    </a>
+
+    {% if has_thumb and is_owner and thumb_transform_url %}
+    <button
+      type="button"
+      class="kr-thumb-edit-btn"
+      data-thumb-edit-btn="1"
+      data-video-id="{{ vid }}"
+      data-thumb-url="{{ url_for(EP_THUMB, video_id=vid) }}"
+      data-thumb-save-url="{{ thumb_transform_url }}"
+      data-thumb-x="{{ thumb_pos_x }}"
+      data-thumb-y="{{ thumb_pos_y }}"
+      data-thumb-scale="{{ thumb_scale }}"
+      aria-label="Editar miniatura"
+      title="Editar miniatura"
+    >
+      ✦
+    </button>
+    {% endif %}
+  </div>
+
+  <div class="kr-video-card-body kr-video-card-body-compact">
+    <div class="kr-video-card-head kr-video-card-head-compact">
+      <div class="kr-video-card-main">
+        <h3 class="kr-video-card-title">
+          {{ title if title else 'Sin título' }}
+        </h3>
+
+        <div class="kr-video-card-meta">
+          {% if creator_username or creator_name %}
+          <span class="kr-video-card-creator-line">
+            <span class="kr-video-card-creator-label">por</span>
+
+            {% if creator_public_slug and 'public_profile_slug' in _views %}
+            <a
+              class="kr-video-card-creator-link"
+              href="{{ url_for('public_profile_slug', slug=creator_public_slug) }}"
+            >
+              {{ '@' ~ creator_username if creator_username else creator_name }}
+            </a>
+            {% elif creator_username and 'public_profile_handle' in _views %}
+            <a
+              class="kr-video-card-creator-link"
+              href="{{ url_for('public_profile_handle', username=creator_username) }}"
+            >
+              {{ '@' ~ creator_username }}
+            </a>
+            {% else %}
+            <span class="kr-video-card-creator-link">
+              {{ '@' ~ creator_username if creator_username else creator_name }}
+            </span>
+            {% endif %} {% if creator_verified %}
+            <span title="Verificado">✔</span>
+            {% endif %}
+          </span>
+          <span>•</span>
+          {% endif %}
+
+          <span>{{ created }}</span>
+          <span>•</span>
+          <span>{{ views }} views</span>
+          <span>•</span>
+          <span>{{ likes_count }} likes</span>
+          <span>•</span>
+          <span>{{ collections_count }} saves</span>
+        </div>
+      </div>
+
+      <div class="kr-video-card-badges">
+        <span class="kr-badge kr-badge-mini">
+          {% if vis == 'private' %} 🔒 Solo tú {% elif vis == 'contacts' %} 👥
+          Contactos {% else %} 🌍 Público {% endif %}
+        </span>
+      </div>
+    </div>
+
+    <div class="kr-video-card-actions kr-video-card-actions-compact">
+      <div class="kr-video-card-actions-left">
+        <a
+          class="kr-btn kr-btn-xs"
+          href="{% if EP_WATCH and vid %}{{ url_for(EP_WATCH, video_id=vid) }}{% else %}#{% endif %}"
+          title="Ver video"
+        >
+          Ver
+        </a>
+      </div>
+
+      <div class="kr-video-card-actions-right">
+        {% if can_like %}
+        <button
+          class="kr-btn kr-btn-xs"
+          type="button"
+          data-like-btn="1"
+          data-video-id="{{ vid }}"
+          data-liked="{{ '1' if liked else '0' }}"
+          aria-label="Me gusta"
+          title="Me gusta"
+        >
+          <span data-like-icon="1">{{ '❤️' if liked else '🤍' }}</span>
+          <span data-like-count="1" style="margin-left: 0.35rem"
+            >{{ likes_count }}</span
+          >
+        </button>
+        {% endif %} {% if can_collect %}
+        <button
+          class="kr-btn kr-btn-xs"
+          type="button"
+          data-collect-btn="1"
+          data-video-id="{{ vid }}"
+          data-collected="{{ '1' if collected else '0' }}"
+          aria-label="Coleccionar"
+          title="Coleccionar"
+        >
+          {{ 'En biblioteca' if collected else 'Coleccionar' }}
+        </button>
+        {% endif %} {% if can_follow and owner_id %}
+        <button
+          class="kr-btn kr-btn-xs"
+          type="button"
+          data-follow-btn="1"
+          data-follow-url="{{ follow_url }}"
+          data-target-user="{{ owner_id }}"
+          data-following="{{ '1' if following else '0' }}"
+        >
+          {{ 'Siguiendo' if following else 'Seguir' }}
+        </button>
+        {% endif %} {% if is_owner and EP_DELETE and vid %}
+        <form
+          method="POST"
+          action="{{ url_for(EP_DELETE, video_id=vid) }}"
+          onsubmit="return confirm('¿Seguro que quieres eliminar este video?');"
+          style="margin: 0"
+        >
+          <button class="kr-btn kr-btn-xs kr-btn-danger" type="submit">
+            Eliminar
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</article>
+{% endmacro %} {% block content %}
+<div class="kr-page kr-videos-page kr-videos-page-pro">
+  <section class="kr-videos-shell">
+    <section class="kr-videos-search-wrap">
+      <div class="kr-videos-top-actions">
+        <div class="kr-videos-top-actions-spacer"></div>
+
+        <div class="kr-videos-top-actions-right">
+          {% if not is_library and EP_UPLOAD %}
+          <a
+            class="kr-btn kr-btn-xs kr-tool-btn"
+            href="{{ url_for(EP_UPLOAD) }}"
+            title="Subir video"
+            aria-label="Subir video"
+            >⬆</a
+          >
+          {% endif %} {% if EP_LIB %}
+          <a
+            class="kr-btn kr-btn-xs kr-tool-btn"
+            href="{{ url_for(EP_LIB) }}"
+            title="Mi biblioteca"
+            aria-label="Mi biblioteca"
+            >📚</a
+          >
+          {% endif %} {% if 'profile_me' in _views %}
+          <a
+            class="kr-btn kr-btn-xs kr-tool-btn"
+            href="{{ url_for('profile_me') }}"
+            title="Mi perfil"
+            aria-label="Mi perfil"
+            >👤</a
+          >
+          {% elif 'settings' in _views %}
+          <a
+            class="kr-btn kr-btn-xs kr-tool-btn"
+            href="{{ url_for('settings') }}"
+            title="Mi cuenta"
+            aria-label="Mi cuenta"
+            >👤</a
+          >
+          {% endif %}
+        </div>
+      </div>
+
+      <form
+        method="GET"
+        action="{% if CURRENT_EP %}{{ url_for(CURRENT_EP) }}{% else %}/videos{% endif %}"
+        class="kr-search kr-videos-searchbar kr-videos-searchbar-centered"
+        id="krVideoSearchForm"
+        autocomplete="off"
+      >
+        <div class="kr-search-combo">
+          <input
+            class="kr-search-input"
+            type="text"
+            name="q"
+            id="krVideoSearchInput"
+            value="{{ search_query }}"
+            placeholder="Buscar por título, descripción, @creador, #hashtag o ideas..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+
+          <button
+            class="kr-search-clear"
+            type="button"
+            id="krSearchClearBtn"
+            aria-label="Limpiar búsqueda"
+            title="Limpiar búsqueda"
+            {%
+            if
+            not
+            search_query
+            %}hidden{%
+            endif
+            %}
+          >
+            ✕
+          </button>
+
+          <button
+            class="kr-search-voice"
+            type="button"
+            id="krSearchVoiceBtn"
+            aria-label="Buscar por voz"
+            title="Buscar por voz"
+          >
+            🎤
+          </button>
+
+          <div class="kr-search-suggest-box" id="krSearchSuggestBox" hidden>
+            <div class="kr-search-suggest-list" id="krSearchSuggestList">
+              {% if not search_query and (recent_searches or trending_searches)
+              %} {% for item in recent_searches[:4] %}
+              <button
+                type="button"
+                class="kr-search-suggest-item"
+                data-suggest-index="{{ loop.index0 }}"
+                data-suggest-value="{{ item }}"
+              >
+                <span class="kr-search-suggest-main">{{ item }}</span>
+                <span class="kr-search-suggest-badge is-recent">Reciente</span>
+              </button>
+              {% endfor %} {% for item in trending_searches[:4] %}
+              <button
+                type="button"
+                class="kr-search-suggest-item"
+                data-suggest-index="{{ 100 + loop.index0 }}"
+                data-suggest-value="{{ item }}"
+              >
+                <span class="kr-search-suggest-main">{{ item }}</span>
+                <span class="kr-search-suggest-badge is-trend">Tendencia</span>
+              </button>
+              {% endfor %} {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <input type="hidden" name="sort" value="{{ sort_mode }}" />
+        <button class="kr-search-btn" type="submit">Buscar</button>
+      </form>
+
+      <div class="kr-videos-pills-row kr-videos-pills-row-centered">
+        <a
+          class="kr-pill kr-pill-filter {% if sort_mode == 'viral' %}is-active{% endif %}"
+          href="{% if CURRENT_EP %}{{ url_for(CURRENT_EP, q=search_query, sort='viral') }}{% else %}#{% endif %}"
+          >Viral</a
+        >
+
+        <a
+          class="kr-pill kr-pill-filter {% if sort_mode == 'for_you' %}is-active{% endif %}"
+          href="{% if CURRENT_EP %}{{ url_for(CURRENT_EP, q=search_query, sort='for_you') }}{% else %}#{% endif %}"
+          >Para ti</a
+        >
+
+        <a
+          class="kr-pill kr-pill-filter {% if sort_mode == 'recent' %}is-active{% endif %}"
+          href="{% if CURRENT_EP %}{{ url_for(CURRENT_EP, q=search_query, sort='recent') }}{% else %}#{% endif %}"
+          >Reciente</a
+        >
+
+        {% if search_query %}
+        <a
+          class="kr-pill kr-pill-clear"
+          href="{% if CURRENT_EP %}{{ url_for(CURRENT_EP, sort=sort_mode) }}{% else %}/videos{% endif %}"
+          >Limpiar</a
+        >
+        {% endif %}
+      </div>
+
+      {% if search_query %}
+      <div class="kr-videos-results-stack">
+        <div class="kr-videos-results-note">
+          {% if search_kind == 'creator' %} Buscando por creador
+          <b>"{{ search_query }}"</b> · {{ result_count }} resultados {% elif
+          search_kind == 'hashtag' %} Buscando por hashtag
+          <b>"{{ search_query }}"</b> · {{ result_count }} resultados {% elif
+          search_kind == 'semantic' %} Búsqueda semántica para
+          <b>"{{ search_query }}"</b> · {{ result_count }} resultados {% else %}
+          Resultados para <b>"{{ search_query }}"</b>: {{ result_count }} {%
+          endif %}
+        </div>
+
+        <div class="kr-videos-search-kind-row">
+          {% if search_kind == 'creator' %}
+          <span class="kr-search-kind-badge is-creator">👤 Creador</span>
+          {% if creator_result_count %}
+          <span class="kr-search-kind-mini"
+            >{{ creator_result_count }} coincidencias de creador</span
+          >
+          {% endif %} {% elif search_kind == 'hashtag' %}
+          <span class="kr-search-kind-badge is-hashtag"># Hashtag</span>
+          {% if hashtag_result_count %}
+          <span class="kr-search-kind-mini"
+            >{{ hashtag_result_count }} coincidencias de hashtag</span
+          >
+          {% endif %} {% elif search_kind == 'semantic' %}
+          <span class="kr-search-kind-badge is-semantic">🧠 Semántica</span>
+          {% if semantic_result_count %}
+          <span class="kr-search-kind-mini"
+            >{{ semantic_result_count }} coincidencias inteligentes</span
+          >
+          {% endif %} {% else %}
+          <span class="kr-search-kind-badge is-general">🔎 General</span>
+          {% if semantic_result_count %}
+          <span class="kr-search-kind-mini"
+            >+ {{ semantic_result_count }} coincidencias semánticas
+            combinadas</span
+          >
+          {% endif %} {% endif %}
+        </div>
+      </div>
+      {% endif %} {% if did_you_mean and did_you_mean != search_query %}
+      <div class="kr-videos-results-note">
+        Quizá quisiste decir:
+        <a
+          class="kr-suggest-link"
+          href="{% if CURRENT_EP %}{{ url_for(CURRENT_EP, q=did_you_mean, sort=sort_mode) }}{% else %}#{% endif %}"
+        >
+          {{ did_you_mean }}
+        </a>
+      </div>
+      {% endif %}
+    </section>
+
+    {% if not videos %}
+    <div class="kr-card kr-videos-empty-card">
+      {% if search_query %}
+      <div class="kr-empty-title">No encontramos resultados.</div>
+      <div class="kr-empty-sub">
+        {% if search_kind == 'creator' %} Prueba con otro <b>@creador</b>,
+        nombre de usuario o nombre público. {% elif search_kind == 'hashtag' %}
+        Prueba con otro <b>#hashtag</b> o una palabra relacionada. {% elif
+        search_kind == 'semantic' %} Intenta describir tu idea con otras
+        palabras o una frase más corta. {% else %} Intenta con otra palabra,
+        menos palabras o una frase diferente. {% endif %}
+      </div>
+
+      <div class="kr-mt-md" style="display: flex; gap: 10px; flex-wrap: wrap">
+        <a
+          class="kr-btn"
+          href="{% if CURRENT_EP %}{{ url_for(CURRENT_EP, sort=sort_mode) }}{% else %}/videos{% endif %}"
+        >
+          Limpiar búsqueda
+        </a>
+
+        {% if search_kind != 'general' %}
+        <a
+          class="kr-btn kr-btn-outline"
+          href="{% if CURRENT_EP %}{{ url_for(CURRENT_EP, q=search_query|replace('@','')|replace('#',''), sort=sort_mode) }}{% else %}/videos{% endif %}"
+        >
+          Buscar sin prefijo
+        </a>
+        {% endif %}
+      </div>
+      {% elif is_library %}
+      <div class="kr-empty-title">Aún no has coleccionado videos.</div>
+      <div class="kr-empty-sub">
+        Cuando presiones <b>Coleccionar</b>, tus videos guardados aparecerán
+        aquí.
+      </div>
+      <div class="kr-mt-md">
+        {% if EP_FEED %}
+        <a class="kr-btn" href="{{ url_for(EP_FEED) }}">Ver videos</a>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="kr-empty-title">Sube contenido a tu canal KR.</div>
+      <div class="kr-empty-sub">Tu primer video aparecerá aquí.</div>
+      <div class="kr-mt-md">
+        {% if EP_UPLOAD %}
+        <a class="kr-btn" href="{{ url_for(EP_UPLOAD) }}">Subir video</a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+    <section class="kr-videos-top-layout kr-videos-top-layout-final">
+      <div class="kr-videos-main-grid">
+        <div class="kr-videos-grid-equal kr-videos-grid-equal-pro">
+          {% for v in videos[:6] %} {{ render_video_card(v) }} {% endfor %}
+        </div>
+      </div>
+
+      <aside class="kr-videos-sidepanel kr-videos-sidepanel-final">
+        <section class="kr-card kr-rank-card kr-rank-card-compact">
+          <div class="kr-rank-card-head">
+            <div>
+              <div class="kr-card-title">🏆 {{ _lbl_ranking }}</div>
+              <div class="kr-card-label">Top impacto en la plataforma</div>
+            </div>
+            <span class="kr-tag kr-tag-ok">TOP</span>
+          </div>
+
+          {% if top_rank %}
+          <div class="kr-rank-list kr-rank-list-compact">
+            {% for r in top_rank[:5] %}
+            <div class="kr-rank-item kr-rank-item-compact">
+              <div class="kr-rank-left">
+                <div class="kr-rank-pos">
+                  {% if loop.index == 1 %} 🥇 {% elif loop.index == 2 %} 🥈 {%
+                  elif loop.index == 3 %} 🥉 {% else %} #{{ loop.index }} {%
+                  endif %}
+                </div>
+                <div>
+                  <div class="kr-rank-name">{{ r.display_name }}</div>
+                  <div class="kr-rank-mini">
+                    {{ r.followers or 0 }} seg · {{ r.likes_received or 0 }}
+                    likes
+                  </div>
+                </div>
+              </div>
+              <div class="kr-rank-score">{{ r.score or 0 }}</div>
+            </div>
+            {% endfor %}
+          </div>
+
+          {% if 'ranking' in _views %}
+          <div class="kr-mt-sm">
+            <a
+              class="kr-btn kr-btn-outline kr-btn-xs"
+              href="{{ url_for('ranking') }}"
+            >
+              Abrir ranking
+            </a>
+          </div>
+          {% endif %} {% else %}
+          <div class="kr-empty kr-mt-md">Aún no hay ranking disponible.</div>
+          {% endif %}
+        </section>
+
+        <section
+          class="kr-card kr-ad-card kr-ad-card-compact kr-banner-rotator"
+          data-kr-banner-rotator="1"
+          data-interval="9000"
+        >
+          {% for b in banner_cards[:5] %}
+          <div
+            class="kr-banner-slide{% if loop.first %} is-active{% endif %}"
+            data-kr-banner-slide="{{ loop.index0 }}"
+          >
+            <div class="kr-ad-badge">{{ b.badge or 'AD' }}</div>
+            <div class="kr-ad-title">{{ b.title or 'Marketplace KR' }}</div>
+            <div class="kr-ad-text">
+              {{ b.text or 'Automatízate premium y crece más rápido.' }}
+            </div>
+            <div class="kr-mt-md">
+              <a
+                class="kr-btn kr-btn-gold kr-btn-xs"
+                href="{{ b.href or '/marketplace' }}"
+              >
+                {{ b.cta or 'Ver oferta' }}
+              </a>
+            </div>
+          </div>
+          {% endfor %} {% if banner_cards|length > 1 %}
+          <div class="kr-banner-dots" aria-label="Banners">
+            {% for b in banner_cards[:5] %}
+            <button
+              type="button"
+              class="kr-banner-dot{% if loop.first %} is-active{% endif %}"
+              data-kr-banner-dot="{{ loop.index0 }}"
+              aria-label="Banner {{ loop.index }}"
+              title="Banner {{ loop.index }}"
+            ></button>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </section>
+      </aside>
+    </section>
+
+    {% if videos|length > 6 %}
+    <section class="kr-videos-feed-full">
+      <div
+        class="kr-videos-feed-grid kr-videos-feed-grid-below kr-videos-feed-grid-below-pro"
+      >
+        {% for v in videos[6:] %} {{ render_video_card(v) }} {% endfor %}
+      </div>
+    </section>
+    {% endif %} {% endif %}
+  </section>
+</div>
+
+<div class="kr-thumb-editor-modal" id="krThumbEditorModal" hidden>
+  <div class="kr-thumb-editor-backdrop" data-thumb-editor-close="1"></div>
+
+  <div
+    class="kr-thumb-editor-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="krThumbEditorTitle"
+  >
+    <div class="kr-thumb-editor-head">
+      <div>
+        <div class="kr-thumb-editor-title" id="krThumbEditorTitle">
+          Editar miniatura
+        </div>
+        <div class="kr-thumb-editor-sub">
+          Ajusta posición y zoom para que la imagen quede bien centrada.
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="kr-thumb-editor-x"
+        data-thumb-editor-close="1"
+        aria-label="Cerrar"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="kr-thumb-editor-body">
+      <div class="kr-thumb-editor-stage-wrap">
+        <div class="kr-thumb-editor-stage" id="krThumbEditorStage">
+          <img
+            id="krThumbEditorImage"
+            class="kr-thumb-editor-image"
+            alt="Editar miniatura"
+          />
+        </div>
+      </div>
+
+      <div class="kr-thumb-editor-controls">
+        <label class="kr-thumb-editor-field">
+          <span>X</span>
+          <input
+            id="krThumbEditorX"
+            type="range"
+            min="0"
+            max="100"
+            step="0.1"
+            value="50"
+          />
+        </label>
+
+        <label class="kr-thumb-editor-field">
+          <span>Y</span>
+          <input
+            id="krThumbEditorY"
+            type="range"
+            min="0"
+            max="100"
+            step="0.1"
+            value="50"
+          />
+        </label>
+
+        <label class="kr-thumb-editor-field">
+          <span>Zoom</span>
+          <input
+            id="krThumbEditorScale"
+            type="range"
+            min="1"
+            max="3"
+            step="0.01"
+            value="1"
+          />
+        </label>
+
+        <div class="kr-thumb-editor-values">
+          <span id="krThumbEditorXVal">X: 50%</span>
+          <span id="krThumbEditorYVal">Y: 50%</span>
+          <span id="krThumbEditorScaleVal">Zoom: 1.00x</span>
+        </div>
+
+        <div class="kr-thumb-editor-actions">
+          <button
+            type="button"
+            class="kr-btn kr-btn-outline"
+            id="krThumbEditorReset"
+          >
+            Reiniciar
+          </button>
+          <button
+            type="button"
+            class="kr-btn kr-btn-gold"
+            id="krThumbEditorSave"
+          >
+            Guardar
+          </button>
+        </div>
+
+        <div class="kr-thumb-editor-status" id="krThumbEditorStatus"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_scripts %}
+<script>
+  async function krPostJSON(url, payload = null) {
+    const opts = {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+    };
+
+    if (payload !== null) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(payload);
+    }
+
+    const res = await fetch(url, opts);
+
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (e) {}
+
+    return { res, data };
+  }
+
+  async function krFollowToggle(btn) {
+    const url = btn?.dataset?.followUrl || "";
+    const target = btn?.dataset?.targetUser || "";
+    const finalUrl = url || (target ? `/api/follow/${target}` : "");
+    if (!finalUrl) return;
+
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "…";
+
+    try {
+      const { res, data } = await krPostJSON(finalUrl);
+      if (!res.ok || !data.ok) throw new Error("follow_failed");
+
+      const isFollowing = !!data.following;
+      btn.dataset.following = isFollowing ? "1" : "0";
+      btn.textContent = isFollowing ? "Siguiendo" : "Seguir";
+    } catch (e) {
+      btn.textContent = oldText;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function krLikeToggle(btn) {
+    const vid = btn?.dataset?.videoId;
+    if (!vid) return;
+
+    const iconEl = btn.querySelector("[data-like-icon='1']");
+    const countEl = btn.querySelector("[data-like-count='1']");
+    const oldIcon = iconEl ? iconEl.textContent : "";
+    const oldCount = countEl ? countEl.textContent : "";
+
+    btn.disabled = true;
+    btn.style.opacity = "0.8";
+
+    try {
+      const { res, data } = await krPostJSON(`/api/videos/like/${vid}`);
+      if (!res.ok || !data.ok) throw new Error("like_failed");
+
+      const liked = !!data.liked;
+      const count = Number(data.likes_count || 0);
+
+      btn.dataset.liked = liked ? "1" : "0";
+      if (iconEl) iconEl.textContent = liked ? "❤️" : "🤍";
+      if (countEl) countEl.textContent = String(count);
+    } catch (e) {
+      if (iconEl) iconEl.textContent = oldIcon;
+      if (countEl) countEl.textContent = oldCount;
+    } finally {
+      btn.disabled = false;
+      btn.style.opacity = "1";
+    }
+  }
+
+  async function krCollectToggle(btn) {
+    const vid = btn?.dataset?.videoId;
+    if (!vid) return;
+
+    const oldText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "…";
+
+    try {
+      const { res, data } = await krPostJSON(`/api/videos/collect/${vid}`);
+      if (!res.ok || !data.ok) throw new Error("collect_failed");
+
+      const collected = !!data.collected;
+      btn.dataset.collected = collected ? "1" : "0";
+      btn.textContent = collected ? "En biblioteca" : "Coleccionar";
+    } catch (e) {
+      btn.textContent = oldText;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.addEventListener("click", (e) => {
+    const followBtn = e.target.closest("[data-follow-btn='1']");
+    if (followBtn) {
+      e.preventDefault();
+      krFollowToggle(followBtn);
+      return;
+    }
+
+    const likeBtn = e.target.closest("[data-like-btn='1']");
+    if (likeBtn) {
+      e.preventDefault();
+      krLikeToggle(likeBtn);
+      return;
+    }
+
+    const collectBtn = e.target.closest("[data-collect-btn='1']");
+    if (collectBtn) {
+      e.preventDefault();
+      krCollectToggle(collectBtn);
+    }
+  });
+
+  (function () {
+    const input = document.getElementById("krVideoSearchInput");
+    const form = document.getElementById("krVideoSearchForm");
+    const suggestBox = document.getElementById("krSearchSuggestBox");
+    const suggestList = document.getElementById("krSearchSuggestList");
+    const voiceBtn = document.getElementById("krSearchVoiceBtn");
+    const clearBtn = document.getElementById("krSearchClearBtn");
+    const searchWrap = document.querySelector(".kr-videos-search-wrap");
+
+    if (!input || !form || !suggestBox || !suggestList) return;
+
+    const suggestEndpoint = `{% if EP_SUGGEST %}{{ url_for(EP_SUGGEST) }}{% else %}/api/videos/suggest{% endif %}`;
+    const scope = "{{ 'library' if is_library else 'feed' }}";
+
+    let debounceTimer = null;
+    let closeTimer = null;
+    let currentItems = [];
+    let activeIndex = -1;
+    let fetchNonce = 0;
+    let pointerInsideSearch = false;
+
+    function escapeHtml(text) {
+      return String(text || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function updateClearButton() {
+      if (!clearBtn) return;
+      clearBtn.hidden = !String(input.value || "").trim();
+    }
+
+    function kindLabel(kind) {
+      if (kind === "recent") return "Reciente";
+      if (kind === "trend") return "Tendencia";
+      if (kind === "suggest") return "Sugerencia";
+      if (kind === "dym") return "Corrección";
+      if (kind === "creator") return "Creador";
+      if (kind === "hashtag") return "Hashtag";
+      return "";
+    }
+
+    function kindClass(kind) {
+      if (kind === "recent") return "is-recent";
+      if (kind === "trend") return "is-trend";
+      if (kind === "suggest") return "is-suggest";
+      if (kind === "dym") return "is-dym";
+      if (kind === "creator") return "is-creator";
+      if (kind === "hashtag") return "is-hashtag";
+      return "";
+    }
+
+    function closeSuggest() {
+      suggestBox.hidden = true;
+      suggestList.innerHTML = "";
+      currentItems = [];
+      activeIndex = -1;
+    }
+
+    function openSuggest() {
+      if (currentItems.length) suggestBox.hidden = false;
+    }
+
+    function cancelCloseTimer() {
+      if (closeTimer) {
+        clearTimeout(closeTimer);
+        closeTimer = null;
+      }
+    }
+
+    function scheduleCloseSuggest(delay = 120) {
+      cancelCloseTimer();
+      closeTimer = setTimeout(() => {
+        if (!pointerInsideSearch) closeSuggest();
+      }, delay);
+    }
+
+    function renderSuggest(items, didYouMean = "") {
+      const rows = [];
+      const seen = new Set();
+      const typed = String(input.value || "").trim().toLowerCase();
+
+      if (didYouMean) {
+        const dymKey = didYouMean.trim().toLowerCase();
+        if (dymKey && dymKey !== typed) {
+          rows.push({ text: didYouMean, kind: "dym" });
+          seen.add(dymKey);
+        }
+      }
+
+      (items || []).forEach((item) => {
+        let text = "";
+        let kind = "suggest";
+
+        if (typeof item === "string") {
+          text = item;
+        } else if (item && typeof item === "object") {
+          text = String(item.text || "").trim();
+          kind = String(item.kind || "suggest").trim();
+        }
+
+        const key = text.toLowerCase();
+        if (!text || seen.has(key)) return;
+        seen.add(key);
+        rows.push({ text, kind });
+      });
+
+      currentItems = rows;
+      activeIndex = -1;
+
+      if (!rows.length) {
+        closeSuggest();
+        return;
+      }
+
+      suggestList.innerHTML = rows.map((item, idx) => {
+        const badge = kindLabel(item.kind);
+        const badgeClass = kindClass(item.kind);
+        return `
+          <button
+            type="button"
+            class="kr-search-suggest-item"
+            data-suggest-index="${idx}"
+            data-suggest-value="${escapeHtml(item.text)}"
+          >
+            <span class="kr-search-suggest-main">${escapeHtml(item.text)}</span>
+            ${badge ? `<span class="kr-search-suggest-badge ${badgeClass}">${badge}</span>` : ""}
+          </button>
+        `;
+      }).join("");
+
+      openSuggest();
+    }
+
+    function paintActive() {
+      const nodes = suggestList.querySelectorAll(".kr-search-suggest-item");
+      nodes.forEach((node, idx) => {
+        node.classList.toggle("is-active", idx === activeIndex);
+      });
+    }
+
+    async function loadSuggestions(query) {
+      const myNonce = ++fetchNonce;
+
+      try {
+        const url = new URL(suggestEndpoint, window.location.origin);
+        url.searchParams.set("q", query);
+        url.searchParams.set("scope", scope);
+
+        const res = await fetch(url.toString(), {
+          headers: { Accept: "application/json" },
+          credentials: "same-origin",
+        });
+
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (e) {}
+
+        if (myNonce !== fetchNonce) return;
+
+        if (!res.ok || !data.ok) {
+          closeSuggest();
+          return;
+        }
+
+        renderSuggest(data.items || [], data.did_you_mean || "");
+      } catch (e) {
+        closeSuggest();
+      }
+    }
+
+    function scheduleSuggest() {
+      const q = (input.value || "").trim();
+      updateClearButton();
+
+      if (debounceTimer) clearTimeout(debounceTimer);
+
+      if (!q) {
+        const initialItems = [];
+        {% for item in recent_searches[:4] %}
+          initialItems.push({ text: {{ item|tojson }}, kind: "recent" });
+        {% endfor %}
+        {% for item in trending_searches[:4] %}
+          initialItems.push({ text: {{ item|tojson }}, kind: "trend" });
+        {% endfor %}
+
+        if (document.activeElement === input && initialItems.length) renderSuggest(initialItems, "");
+        else closeSuggest();
+        return;
+      }
+
+      debounceTimer = setTimeout(() => {
+        loadSuggestions(q);
+      }, 180);
+    }
+
+    input.addEventListener("input", scheduleSuggest);
+    input.addEventListener("focus", () => {
+      pointerInsideSearch = true;
+      cancelCloseTimer();
+      updateClearButton();
+      scheduleSuggest();
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        input.value = "";
+        updateClearButton();
+        activeIndex = -1;
+        input.focus();
+        scheduleSuggest();
+      });
+    }
+
+    if (searchWrap) {
+      searchWrap.addEventListener("mouseenter", () => {
+        pointerInsideSearch = true;
+        cancelCloseTimer();
+      });
+
+      searchWrap.addEventListener("mouseleave", () => {
+        pointerInsideSearch = false;
+        scheduleCloseSuggest(100);
+      });
+    }
+
+    input.addEventListener("blur", () => {
+      scheduleCloseSuggest(100);
+    });
+
+    suggestBox.addEventListener("mouseenter", () => {
+      pointerInsideSearch = true;
+      cancelCloseTimer();
+    });
+
+    suggestBox.addEventListener("mouseleave", () => {
+      pointerInsideSearch = false;
+      scheduleCloseSuggest(100);
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        input.value = "";
+        updateClearButton();
+        closeSuggest();
+        return;
+      }
+
+      if (suggestBox.hidden || !currentItems.length) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        activeIndex = Math.min(activeIndex + 1, currentItems.length - 1);
+        paintActive();
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        activeIndex = Math.max(activeIndex - 1, 0);
+        paintActive();
+        return;
+      }
+
+      if (e.key === "Enter" && activeIndex >= 0) {
+        e.preventDefault();
+        input.value = currentItems[activeIndex].text;
+        updateClearButton();
+        closeSuggest();
+        form.submit();
+      }
+    });
+
+    suggestList.addEventListener("click", (e) => {
+      const btn = e.target.closest(".kr-search-suggest-item");
+      if (!btn) return;
+
+      const index = Number(btn.getAttribute("data-suggest-index"));
+      if (!Number.isNaN(index) && currentItems[index]) {
+        input.value = currentItems[index].text;
+      } else {
+        const value = btn.getAttribute("data-suggest-value") || "";
+        input.value = value;
+      }
+
+      updateClearButton();
+      closeSuggest();
+      form.submit();
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".kr-videos-search-wrap")) {
+        pointerInsideSearch = false;
+        closeSuggest();
+      }
+    });
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+    if (!SpeechRecognition) {
+      if (voiceBtn) {
+        voiceBtn.disabled = true;
+        voiceBtn.title = "Búsqueda por voz no disponible en este navegador";
+      }
+      updateClearButton();
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "{{ (lang or 'es') == 'de' and 'de-DE' or ((lang or 'es') == 'en' and 'en-US' or 'es-ES') }}";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      let listening = false;
+
+      function setListening(state) {
+        listening = !!state;
+        if (voiceBtn) {
+          voiceBtn.classList.toggle("is-listening", listening);
+          voiceBtn.title = listening ? "Escuchando..." : "Buscar por voz";
+        }
+      }
+
+      recognition.onstart = () => setListening(true);
+      recognition.onend = () => setListening(false);
+      recognition.onerror = () => setListening(false);
+
+      recognition.onresult = (event) => {
+        const transcript = event?.results?.[0]?.[0]?.transcript
+          ? String(event.results[0][0].transcript).trim()
+          : "";
+
+        if (!transcript) return;
+
+        input.value = transcript;
+        updateClearButton();
+        closeSuggest();
+
+        if (typeof form.requestSubmit === "function") form.requestSubmit();
+        else form.submit();
+      };
+
+      if (voiceBtn) {
+        voiceBtn.addEventListener("click", () => {
+          try {
+            if (listening) recognition.stop();
+            else recognition.start();
+          } catch (e) {}
+        });
+      }
+
+      updateClearButton();
+    }
+  })();
+
+  (function () {
+    const rotator = document.querySelector("[data-kr-banner-rotator='1']");
+    if (!rotator) return;
+
+    const slides = Array.from(rotator.querySelectorAll("[data-kr-banner-slide]"));
+    const dots = Array.from(rotator.querySelectorAll("[data-kr-banner-dot]"));
+    const interval = Number(rotator.getAttribute("data-interval") || 9000);
+
+    if (!slides.length) return;
+
+    let index = 0;
+    let timer = null;
+
+    function show(i) {
+      index = i;
+      slides.forEach((slide, idx) => slide.classList.toggle("is-active", idx === index));
+      dots.forEach((dot, idx) => dot.classList.toggle("is-active", idx === index));
+    }
+
+    function next() {
+      show((index + 1) % slides.length);
+    }
+
+    function start() {
+      stop();
+      if (slides.length > 1) timer = setInterval(next, interval);
+    }
+
+    function stop() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    dots.forEach((dot, idx) => {
+      dot.addEventListener("click", () => {
+        show(idx);
+        start();
+      });
+    });
+
+    rotator.addEventListener("mouseenter", stop);
+    rotator.addEventListener("mouseleave", start);
+
+    show(0);
+    start();
+  })();
+
+  (function () {
+    const previewVideos = Array.from(document.querySelectorAll("[data-preview-video='1']"));
+    if (!previewVideos.length) return;
+
+    let activeVideo = null;
+    let hoverTimer = null;
+
+    function clearHoverTimer() {
+      if (hoverTimer) {
+        clearTimeout(hoverTimer);
+        hoverTimer = null;
+      }
+    }
+
+    function resetVideo(video) {
+      if (!video) return;
+      try {
+        video.pause();
+        video.currentTime = 0;
+      } catch (e) {}
+      video.removeAttribute("data-preview-active");
+    }
+
+    function stopActivePreview() {
+      if (!activeVideo) return;
+      resetVideo(activeVideo);
+      activeVideo = null;
+    }
+
+    async function startPreview(video) {
+      if (!video) return;
+      if (activeVideo === video) return;
+
+      stopActivePreview();
+      activeVideo = video;
+      video.setAttribute("data-preview-active", "1");
+
+      try {
+        if (video.readyState >= 2) {
+          try {
+            video.currentTime = 0.08;
+          } catch (e) {}
+        }
+        await video.play();
+      } catch (e) {
+        video.removeAttribute("data-preview-active");
+        if (activeVideo === video) activeVideo = null;
+      }
+    }
+
+    function bindPreview(video) {
+      const trigger = video.closest(".kr-video-card-thumb-link") || video;
+      const hasThumb = video.dataset.hasThumb === "1";
+
+      const enter = () => {
+        clearHoverTimer();
+        hoverTimer = setTimeout(() => startPreview(video), hasThumb ? 160 : 120);
+      };
+
+      const leave = () => {
+        clearHoverTimer();
+        if (activeVideo === video) {
+          resetVideo(video);
+          activeVideo = null;
+        } else {
+          resetVideo(video);
+        }
+      };
+
+      trigger.addEventListener("mouseenter", enter);
+      trigger.addEventListener("mouseleave", leave);
+      trigger.addEventListener("focusin", enter);
+      trigger.addEventListener("focusout", leave);
+
+      video.addEventListener("ended", () => {
+        try {
+          video.currentTime = 0;
+          video.play();
+        } catch (e) {}
+      });
+    }
+
+    previewVideos.forEach(bindPreview);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        clearHoverTimer();
+        stopActivePreview();
+      }
+    });
+
+    window.addEventListener("pagehide", () => {
+      clearHoverTimer();
+      stopActivePreview();
+    });
+  })();
+
+  (function () {
+    const modal = document.getElementById("krThumbEditorModal");
+    const img = document.getElementById("krThumbEditorImage");
+    const xInput = document.getElementById("krThumbEditorX");
+    const yInput = document.getElementById("krThumbEditorY");
+    const scaleInput = document.getElementById("krThumbEditorScale");
+    const xVal = document.getElementById("krThumbEditorXVal");
+    const yVal = document.getElementById("krThumbEditorYVal");
+    const scaleVal = document.getElementById("krThumbEditorScaleVal");
+    const statusEl = document.getElementById("krThumbEditorStatus");
+    const saveBtn = document.getElementById("krThumbEditorSave");
+    const resetBtn = document.getElementById("krThumbEditorReset");
+
+    if (!modal || !img || !xInput || !yInput || !scaleInput || !saveBtn || !resetBtn) return;
+
+    let current = {
+      videoId: "",
+      saveUrl: "",
+      x: 50,
+      y: 50,
+      scale: 1,
+      triggerBtn: null,
+    };
+
+    function updatePreview() {
+      const x = Number(xInput.value || 50);
+      const y = Number(yInput.value || 50);
+      const scale = Number(scaleInput.value || 1);
+
+      img.style.objectPosition = `${x}% ${y}%`;
+      img.style.transform = `scale(${scale})`;
+
+      if (xVal) xVal.textContent = `X: ${x.toFixed(1)}%`;
+      if (yVal) yVal.textContent = `Y: ${y.toFixed(1)}%`;
+      if (scaleVal) scaleVal.textContent = `Zoom: ${scale.toFixed(2)}x`;
+    }
+
+    function openEditor(btn) {
+      const thumbUrl = btn?.dataset?.thumbUrl || "";
+      const saveUrl = btn?.dataset?.thumbSaveUrl || "";
+      if (!thumbUrl || !saveUrl) return;
+
+      current.videoId = btn.dataset.videoId || "";
+      current.saveUrl = saveUrl;
+      current.x = Number(btn.dataset.thumbX || 50);
+      current.y = Number(btn.dataset.thumbY || 50);
+      current.scale = Number(btn.dataset.thumbScale || 1);
+      current.triggerBtn = btn;
+
+      img.src = thumbUrl;
+      xInput.value = String(current.x);
+      yInput.value = String(current.y);
+      scaleInput.value = String(current.scale);
+
+      if (statusEl) statusEl.textContent = "";
+      modal.hidden = false;
+      document.body.classList.add("kr-modal-open");
+      updatePreview();
+    }
+
+    function closeEditor() {
+      modal.hidden = true;
+      document.body.classList.remove("kr-modal-open");
+      if (statusEl) statusEl.textContent = "";
+    }
+
+    async function saveEditor() {
+      const x = Number(xInput.value || 50);
+      const y = Number(yInput.value || 50);
+      const scale = Number(scaleInput.value || 1);
+
+      saveBtn.disabled = true;
+      if (statusEl) statusEl.textContent = "Guardando...";
+
+      try {
+        const { res, data } = await krPostJSON(current.saveUrl, { x, y, scale });
+        if (!res.ok || !data.ok) throw new Error("save_failed");
+
+        if (current.triggerBtn) {
+          current.triggerBtn.dataset.thumbX = String(x);
+          current.triggerBtn.dataset.thumbY = String(y);
+          current.triggerBtn.dataset.thumbScale = String(scale);
+
+          const card = current.triggerBtn.closest(".kr-video-card");
+          const imgEl = card ? card.querySelector(".kr-video-thumb-image") : null;
+
+          if (imgEl) {
+            imgEl.style.objectPosition = `${x}% ${y}%`;
+            imgEl.style.transform = `scale(${scale})`;
+          }
+        }
+
+        if (statusEl) statusEl.textContent = "✅ Miniatura actualizada.";
+        setTimeout(closeEditor, 450);
+      } catch (e) {
+        if (statusEl) statusEl.textContent = "❌ No se pudo guardar.";
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+
+    xInput.addEventListener("input", updatePreview);
+    yInput.addEventListener("input", updatePreview);
+    scaleInput.addEventListener("input", updatePreview);
+
+    resetBtn.addEventListener("click", () => {
+      xInput.value = "50";
+      yInput.value = "50";
+      scaleInput.value = "1";
+      updatePreview();
+    });
+
+    saveBtn.addEventListener("click", saveEditor);
+
+    document.addEventListener("click", (e) => {
+      const openBtn = e.target.closest("[data-thumb-edit-btn='1']");
+      if (openBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        openEditor(openBtn);
+        return;
+      }
+
+      const closeBtn = e.target.closest("[data-thumb-editor-close='1']");
+      if (closeBtn) {
+        e.preventDefault();
+        closeEditor();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.hidden) closeEditor();
+    });
+  })();
+</script>
+
+<style>
+  .kr-video-thumb-shell {
+    position: relative;
+  }
+
+  .kr-video-thumb-frame {
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .kr-video-thumb-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    z-index: 1;
+    transition:
+      opacity 0.22s ease,
+      transform 0.28s ease,
+      object-position 0.22s ease,
+      filter 0.22s ease;
+    background: #000;
+    transform-origin: center center;
+  }
+
+  .kr-video-thumb.has-thumb {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    opacity: 0;
+    transition:
+      opacity 0.22s ease,
+      transform 0.28s ease,
+      filter 0.28s ease;
+    background: #000;
+  }
+
+  .kr-video-thumb[data-preview-active="1"].has-thumb {
+    opacity: 1;
+  }
+
+  .kr-video-thumb-frame:hover .kr-video-thumb-image,
+  .kr-video-card-thumb-link:focus .kr-video-thumb-image,
+  .kr-video-card-thumb-link:focus-visible .kr-video-thumb-image {
+    filter: brightness(1.03);
+  }
+
+  .kr-video-thumb-play-badge {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 3;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.48);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+    pointer-events: none;
+    transition:
+      opacity 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .kr-video-card:hover .kr-video-thumb-play-badge {
+    transform: scale(1.04);
+  }
+
+  .kr-video-thumb[data-preview-active="1"] ~ .kr-video-thumb-play-badge {
+    opacity: 0;
+  }
+
+  .kr-thumb-edit-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 4;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.26);
+    backdrop-filter: blur(8px);
+    transition:
+      transform 0.18s ease,
+      background 0.18s ease,
+      opacity 0.18s ease;
+  }
+
+  .kr-thumb-edit-btn:hover {
+    transform: scale(1.05);
+    background: rgba(0, 0, 0, 0.68);
+  }
+
+  .kr-thumb-editor-modal[hidden] {
+    display: none !important;
+  }
+
+  .kr-thumb-editor-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+  }
+
+  .kr-thumb-editor-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.68);
+    backdrop-filter: blur(6px);
+  }
+
+  .kr-thumb-editor-dialog {
+    position: relative;
+    z-index: 2;
+    width: min(960px, calc(100vw - 28px));
+    margin: 3vh auto 0;
+    background: rgba(17, 18, 25, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.46);
+    overflow: hidden;
+  }
+
+  .kr-thumb-editor-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .kr-thumb-editor-title {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  .kr-thumb-editor-sub {
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.92rem;
+  }
+
+  .kr-thumb-editor-x {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .kr-thumb-editor-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+    gap: 18px;
+    padding: 18px;
+  }
+
+  .kr-thumb-editor-stage-wrap {
+    min-width: 0;
+  }
+
+  .kr-thumb-editor-stage {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 22px;
+    overflow: hidden;
+    background: #000;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .kr-thumb-editor-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+    transform: scale(1);
+    transform-origin: center center;
+    display: block;
+  }
+
+  .kr-thumb-editor-controls {
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+
+  .kr-thumb-editor-field {
+    display: grid;
+    gap: 8px;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .kr-thumb-editor-field input[type="range"] {
+    width: 100%;
+  }
+
+  .kr-thumb-editor-values {
+    display: grid;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.94rem;
+  }
+
+  .kr-thumb-editor-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .kr-thumb-editor-status {
+    min-height: 22px;
+    color: rgba(255, 255, 255, 0.86);
+    font-weight: 700;
+  }
+
+  .kr-modal-open {
+    overflow: hidden;
+  }
+
+  .kr-videos-empty-card {
+    padding: 24px;
+    border-radius: 22px;
+  }
+
+  .kr-empty-title {
+    font-size: 1.08rem;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  .kr-empty-sub {
+    margin-top: 8px;
+    color: rgba(255, 255, 255, 0.72);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 860px) {
+    .kr-thumb-editor-dialog {
+      margin-top: 2vh;
+    }
+
+    .kr-thumb-editor-body {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
